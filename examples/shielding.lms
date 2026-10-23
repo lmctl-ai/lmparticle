@@ -1,0 +1,23 @@
+# Lead shielding of a Cs-137 (662 keV) beam: uncollided and total transmission against thickness, half- and tenth-value layers.
+out = ARGV.len() > 0 ? ARGV[0] : "build/shielding.dslb";
+p = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+let pb = rad.builtin("lead");
+rad.print("lead at 662 keV: mu/rho " + str(pb.mu_mass(0.662)) + " cm2/g, HVL " + str(pb.hvl(0.662)) + " cm, TVL " + str(pb.hvl(0.662) * 3.321928094887362) + " cm");
+rad.assert_close(pb.mu_mass(0.662), 0.1102, 0.0001);
+let s = rad.source();
+s.point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(0.662);
+let rows = "";
+for (i in range(0, 13)) {
+  let t = 0.25 * float(i + 1);
+  let g = rad.geometry();
+  g.slab("shield", pb, 0.0, t);
+  let r = rad.simulation(g, s).plane("exit", "z", t).seed(100 + i).run(200000);
+  let exact = pow(2.718281828459045, -pb.mu(0.662) * t);
+  rad.assert_true(abs(r.plane_uncollided("exit") - exact) < 4.5 * r.plane_uncollided_err("exit") + 0.000001);
+  rows = rows + str(t) + " " + str(exact) + " " + str(r.plane_uncollided("exit")) + " " + str(r.plane_count("exit")) + "\n";
+}
+rad.print("thickness [cm], exp(-mu x), uncollided, total forward crossings:");
+rad.print(rows);
+rad.save_text("build/examples/shielding.csv", rows);
+end _dsl_
+savedsl(p, out);

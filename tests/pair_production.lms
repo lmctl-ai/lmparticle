@@ -1,0 +1,35 @@
+# Pair production: threshold at 1.022 MeV, annihilation photons at 511 keV, and the process mix of the tables.
+out = ARGV.len() > 0 ? ARGV[0] : "build/pair_production.dslb";
+p = _dsl_ cli="lmparticle";
+let pb = rad.builtin("lead");
+let g = rad.geometry();
+g.slab("lead", pb, 0.0, 3.0);
+let s = rad.source();
+s.point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(1.0);
+# below threshold there are no pair events at all
+let r = rad.simulation(g, s).seed(1).run(20000);
+rad.assert_close(r.interactions("pair"), 0.0, 0.0);
+rad.assert_true(r.interactions("compton") > 0.0);
+# above it there are, and 511 keV photons leave the lead: the leakage spectrum has a line at 0.511 MeV
+let s2 = rad.source();
+s2.point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(8.0);
+let r2 = rad.simulation(g, s2).spectrum(160, 8.0).seed(2).run(20000);
+rad.assert_true(r2.interactions("pair") > 0.1);
+r2.save_leakage_spectrum("build/pair_leakage.csv");
+# first-interaction mix in a thin lead film at 300 keV: Compton to photoelectric follows the tables (mu_c / mu_p)
+let film = rad.geometry();
+film.slab("film", pb, 0.0, 0.02);
+let s3 = rad.source();
+s3.point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(0.3);
+let r3 = rad.simulation(film, s3).seed(3).run(2000000);
+let ratio = r3.interactions("compton") / r3.interactions("photo");
+rad.assert_close(ratio / (pb.mu_partial(0.3, "compton") / pb.mu_partial(0.3, "photo")), 1.0, 0.06);
+# thin lead film at 5 MeV: pair to Compton
+let s4 = rad.source();
+s4.point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(5.0);
+let r4 = rad.simulation(film, s4).seed(4).run(2000000);
+rad.assert_close((r4.interactions("pair") / r4.interactions("compton")) / (pb.mu_partial(5.0, "pair") / pb.mu_partial(5.0, "compton")), 1.0, 0.1);
+# the energy still balances with pairs in play
+rad.assert_close(r2.total_deposited() + r2.escaped_energy(), 8.0, 0.000000001);
+end _dsl_
+savedsl(p, out);

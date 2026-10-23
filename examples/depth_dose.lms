@@ -1,0 +1,23 @@
+# Energy deposited layer by layer in a 30 cm water phantom by a Co-60 beam (1.173 and 1.332 MeV): a kerma depth profile.
+out = ARGV.len() > 0 ? ARGV[0] : "build/depth_dose.dslb";
+p = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+let water = rad.builtin("water");
+let g = rad.geometry();
+for (i in range(0, 30)) {
+  g.slab("z" + str(i), water, float(i), float(i + 1));
+}
+let s = rad.source();
+s.point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).line(1.173, 1.0).line(1.332, 1.0);
+let r = rad.simulation(g, s).seed(7).run(500000);
+let rows = "";
+for (i in range(0, 30)) {
+  rows = rows + str(float(i) + 0.5) + " " + str(r.deposited("z" + str(i))) + " " + str(r.deposited_err("z" + str(i))) + "\n";
+}
+rad.save_text("build/examples/depth_dose.csv", rows);
+rad.print("first layer " + str(r.deposited("z0")) + " MeV/photon, last layer " + str(r.deposited("z29")) + " MeV/photon");
+rad.assert_true(r.deposited("z0") > 2.0 * r.deposited("z29"));
+# the 30 layers hold what the phantom absorbs; the rest leaves
+rad.assert_close(r.total_deposited() + r.escaped_energy(), r.source_energy(), 0.000000001);
+rad.print("absorbed " + str(r.total_deposited() / r.source_energy()) + " of the beam energy");
+end _dsl_
+savedsl(p, out);

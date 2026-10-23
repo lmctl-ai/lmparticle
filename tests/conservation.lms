@@ -1,0 +1,56 @@
+# Energy bookkeeping: what is deposited plus what leaves equals what was emitted, in every geometry and at every energy.
+out = ARGV.len() > 0 ? ARGV[0] : "build/conservation.dslb";
+p = _dsl_ cli="lmparticle";
+let pb = rad.builtin("lead");
+let water = rad.builtin("water");
+let conc = rad.builtin("concrete");
+
+# isotropic point source inside a finite water box
+let g = rad.geometry();
+g.box("tank", water, -20.0, 20.0, -20.0, 20.0, -20.0, 20.0);
+let s = rad.source();
+s.point(0.0, 0.0, 0.0).isotropic().energy(1.0);
+let r = rad.simulation(g, s).seed(3).run(50000);
+rad.assert_close(r.total_deposited() + r.escaped_energy(), 1.0, 0.000000001);
+rad.assert_close(r.deposited("tank"), r.total_deposited(), 0.000000001);
+rad.assert_true(r.escaped_energy() > 0.1);
+
+# a huge tank absorbs everything: 1 MeV photons have a mean free path of 14 cm in water
+let big = rad.geometry();
+big.box("ocean", water, -400.0, 400.0, -400.0, 400.0, -400.0, 400.0);
+let rb = rad.simulation(big, s).seed(4).run(2000);
+rad.assert_close(rb.deposited("ocean"), 1.0, 0.000000001);
+rad.assert_close(rb.escaped(), 0.0, 0.0);
+
+# pair production and annihilation photons: 5 MeV in lead, a polychromatic source (0.3, 1.25, 5 MeV) in a lead and concrete stack
+let g2 = rad.geometry();
+g2.slab("lead", pb, 0.0, 2.0).slab("concrete", conc, 2.0, 12.0);
+let s2 = rad.source();
+s2.point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).line(0.3, 1.0).line(1.25, 2.0).line(5.0, 1.0);
+let r2 = rad.simulation(g2, s2).seed(5).run(50000);
+# the realized mean source energy is close to the expected (0.3 + 2 * 1.25 + 5) / 4 = 1.95
+rad.assert_close(r2.source_energy(), 1.95, 0.03);
+rad.assert_close(r2.total_deposited() + r2.escaped_energy(), r2.source_energy(), 0.000000001);
+rad.assert_close(r2.deposited("lead") + r2.deposited("concrete"), r2.total_deposited(), 0.000000001);
+
+# thin water slab at 1 MeV: single Compton scatters, so the deposit is P(interact) * <E_electron>
+let g3 = rad.geometry();
+g3.slab("film", water, 0.0, 0.2);
+let s3 = rad.source();
+s3.point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(1.0);
+let r3 = rad.simulation(g3, s3).seed(6).run(2000000);
+let p_int = 1.0 - pow(2.718281828459045, -0.2 * water.mu(1.0));
+let want3 = p_int * rad.compton_mean_transfer(1.0);
+rad.assert_true(abs(r3.deposited("film") - want3) < 4.0 * r3.deposited_err("film") + 0.00002);
+rad.assert_close(r3.deposited("film") / want3, 1.0, 0.03);
+rad.assert_close(r3.total_deposited() + r3.escaped_energy(), 1.0, 0.000000001);
+
+# cutoff: photons below the cutoff are absorbed on the spot, the books still balance
+let r4 = rad.simulation(g2, s2).cutoff(0.1).seed(5).run(20000);
+rad.assert_close(r4.total_deposited() + r4.escaped_energy(), r4.source_energy(), 0.000000001);
+# the per-region statistics carry an error estimate that shrinks with histories
+let ra = rad.simulation(g3, s3).seed(1).run(100000);
+let rb2 = rad.simulation(g3, s3).seed(1).run(400000);
+rad.assert_close(rb2.deposited_err("film") / ra.deposited_err("film"), 0.5, 0.08);
+end _dsl_
+savedsl(p, out);

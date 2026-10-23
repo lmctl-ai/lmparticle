@@ -1,0 +1,44 @@
+# Embedded NIST XCOM tables and the mixture rule, against published XCOM values (mass attenuation with coherent scattering, cm2/g).
+out = ARGV.len() > 0 ? ARGV[0] : "build/cross_sections.dslb";
+p = _dsl_ cli="lmparticle";
+let w = rad.builtin("water");
+rad.assert_close(w.mu_mass(0.01), 5.329, 0.002);
+rad.assert_close(w.mu_mass(0.1), 0.1707, 0.00005);
+rad.assert_close(w.mu_mass(1.0), 0.07072, 0.00001);
+rad.assert_close(w.mu_mass(10.0), 0.02219, 0.00001);
+rad.assert_close(rad.builtin("lead").mu_mass(0.1), 5.549, 0.001);
+rad.assert_close(rad.builtin("lead").mu_mass(1.0), 0.07102, 0.00001);
+rad.assert_close(rad.builtin("iron").mu_mass(0.1), 0.3717, 0.0001);
+rad.assert_close(rad.builtin("iron").mu_mass(1.0), 0.05995, 0.00001);
+rad.assert_close(rad.builtin("aluminum").mu_mass(0.1), 0.1704, 0.0001);
+rad.assert_close(rad.builtin("aluminum").mu_mass(1.0), 0.06146, 0.00001);
+rad.assert_close(rad.builtin("air").mu_mass(1.0), 0.06358, 0.00001);
+rad.assert_close(rad.builtin("nai").mu_mass(1.0), 0.05881, 0.00001);
+rad.assert_close(rad.builtin("lead").mu_mass(0.662), 0.1102, 0.0001);
+# linear coefficient is mass coefficient times density; mean free path and half-value layer follow
+rad.assert_close(rad.builtin("lead").mu(1.0), 0.07102 * 11.35, 0.0002);
+rad.assert_close(w.mfp(1.0) * w.mu(1.0), 1.0, 0.0000000001);
+rad.assert_close(w.hvl(1.0), 0.693147180559945 / w.mu(1.0), 0.0000000001);
+# mixture rule: a hand-built water is the builtin water; fractions are normalized
+rad.assert_close(rad.material("hydrogen only", 0.5).element("H", 7.0).mu_mass(1.0), rad.material("h", 3.0).element("H", 1.0).mu_mass(1.0), 0.0000000001);
+rad.assert_close(rad.material("same", 2.0).element("Pb", 1.0).mu(1.0), 2.0 * rad.material("same2", 1.0).element("Pb", 5.0).mu_mass(1.0), 0.0000000001);
+# absorption edges: lead's K edge is at 88.0 keV; the coefficient jumps up by a factor of about 4 across it
+let pb = rad.builtin("lead");
+rad.assert_true(pb.mu_mass(0.0881) > 3.0 * pb.mu_mass(0.0879));
+rad.assert_true(pb.mu_mass(0.0881) < 5.0 * pb.mu_mass(0.0879));
+# photoelectric absorption dominates at low energy in lead, Compton scattering in water at 1 MeV, pair production at 10 MeV
+rad.assert_true(pb.mu_partial(0.1, "photo") > 0.9 * pb.mu(0.1));
+rad.assert_true(w.mu_partial(1.0, "compton") > 0.99 * w.mu(1.0));
+rad.assert_true(pb.mu_partial(10.0, "pair") > pb.mu_partial(10.0, "compton"));
+rad.assert_close(pb.mu_partial(1.0, "pair"), 0.0, 0.0);
+# the four partial coefficients add up to the total
+rad.assert_close(pb.mu_partial(2.0, "rayleigh") + pb.mu_partial(2.0, "compton") + pb.mu_partial(2.0, "photo") + pb.mu_partial(2.0, "pair"), pb.mu(2.0), 0.0000000001);
+# Compton scattering from hydrogen at 1 MeV is the free-electron Klein-Nishina cross section (binding is a 0.1% effect):
+# sigma per electron = (mu/rho) A / N_A, A = 1.00794 g/mol
+let h = rad.material("h", 1.0).element("H", 1.0);
+rad.assert_close(h.mu_partial(1.0, "compton") * 1.00794 / 602214076000000000000000.0 / rad.klein_nishina(1.0), 1.0, 0.003);
+# other builtin materials load and attenuate sensibly
+rad.assert_true(rad.builtin("concrete").mu_mass(1.0) > 0.05);
+rad.assert_true(rad.builtin("copper").mu_mass(0.1) > rad.builtin("copper").mu_mass(1.0));
+end _dsl_
+savedsl(p, out);

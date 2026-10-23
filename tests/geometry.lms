@@ -1,0 +1,58 @@
+# Geometry: ray-box tracking, region priority, solid angle of an isotropic source, boxes versus slabs.
+out = ARGV.len() > 0 ? ARGV[0] : "build/geometry.dslb";
+p = _dsl_ cli="lmparticle";
+let e1 = 2.718281828459045;
+let pb = rad.builtin("lead");
+let water = rad.builtin("water");
+let tungsten = rad.builtin("tungsten");
+
+# a lead brick inside a water tank, listed first, so it wins where the boxes overlap:
+# beam along x from x = -8: 8 cm water, 1 cm lead, 9 cm water
+let g = rad.geometry();
+g.box("brick", pb, 0.0, 1.0, -5.0, 5.0, -5.0, 5.0).box("tank", water, -10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
+let s = rad.source();
+s.point(-8.0, 0.0, 0.0).beam(1.0, 0.0, 0.0).energy(1.0);
+let r = rad.simulation(g, s).seed(21).run(200000);
+let want = pow(e1, -17.0 * water.mu(1.0) - 1.0 * pb.mu(1.0));
+rad.assert_true(abs(r.escaped_uncollided() - want) < 4.0 * r.escaped_uncollided_err());
+rad.assert_close(r.total_deposited() + r.escaped_energy(), 1.0, 0.000000001);
+# listed the other way round the tank takes priority and the brick is never entered: 19 cm of water
+let g2 = rad.geometry();
+g2.box("tank", water, -10.0, 10.0, -10.0, 10.0, -10.0, 10.0).box("brick", pb, 0.0, 1.0, -5.0, 5.0, -5.0, 5.0);
+let r2 = rad.simulation(g2, s).seed(21).run(200000);
+rad.assert_true(abs(r2.escaped_uncollided() - pow(e1, -18.0 * water.mu(1.0))) < 4.0 * r2.escaped_uncollided_err());
+rad.assert_close(r2.deposited("brick"), 0.0, 0.0);
+
+# solid angle: isotropic 30 keV point source, a 20 x 20 cm tungsten detector 2 cm thick at 50 cm.
+# Omega/4pi = arctan(ab / (2 d sqrt(4 d^2 + a^2 + b^2))) / pi = 0.0122457; hits are absorbed (photoelectric), with a 1-2% scatter loss
+let det = rad.geometry();
+det.box("detector", tungsten, -10.0, 10.0, -10.0, 10.0, 50.0, 52.0);
+let s3 = rad.source();
+s3.point(0.0, 0.0, 0.0).isotropic().energy(0.03);
+let r3 = rad.simulation(det, s3).seed(22).run(2000000);
+rad.assert_close(r3.deposited("detector") / 0.03, 0.0122457, 0.0002);
+rad.assert_close(r3.escaped(), 1.0 - 0.0122457, 0.0002);
+# the same detector seen from the other side of the source is not hit
+let det2 = rad.geometry();
+det2.box("detector", tungsten, -10.0, 10.0, -10.0, 10.0, -52.0, -50.0);
+rad.assert_close(rad.simulation(det2, s3).seed(22).run(2000000).deposited("detector") / 0.03, 0.0122457, 0.0002);
+
+# a very wide box and a slab give statistically the same answer
+let slab = rad.geometry();
+slab.slab("w", water, 0.0, 8.0);
+let wide = rad.geometry();
+wide.box("w", water, -100000.0, 100000.0, -100000.0, 100000.0, 0.0, 8.0);
+let s4 = rad.source();
+s4.point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(0.5);
+let ra = rad.simulation(slab, s4).plane("e", "z", 8.0).seed(23).run(100000);
+let rb = rad.simulation(wide, s4).plane("e", "z", 8.0).seed(23).run(100000);
+rad.assert_close(ra.plane_count("e"), rb.plane_count("e"), 0.006);
+rad.assert_close(ra.deposited("w"), rb.deposited("w"), 0.008);
+
+# a source inside a slab starts in its material: 1 cm from the surface, uncollided forward flux = exp(-mu * 1)
+let s5 = rad.source();
+s5.point(0.0, 0.0, 7.0).beam(0.0, 0.0, 1.0).energy(0.5);
+let rc = rad.simulation(slab, s5).plane("e", "z", 8.0).seed(24).run(200000);
+rad.assert_true(abs(rc.plane_uncollided("e") - pow(e1, -water.mu(0.5))) < 4.0 * rc.plane_uncollided_err("e"));
+end _dsl_
+savedsl(p, out);

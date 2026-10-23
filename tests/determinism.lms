@@ -1,0 +1,24 @@
+# Seeded runs are reproducible bit for bit; seeds and histories change the numbers; CSV outputs are written.
+out = ARGV.len() > 0 ? ARGV[0] : "build/determinism.dslb";
+p = _dsl_ cli="lmparticle";
+let water = rad.builtin("water");
+let g = rad.geometry();
+g.slab("w", water, 0.0, 5.0);
+let s = rad.source();
+s.point(0.0, 0.0, -1.0).isotropic().energy(0.8);
+let a = rad.simulation(g, s).plane("e", "z", 5.0).spectrum(40, 0.8).seed(77).run(50000);
+let b = rad.simulation(g, s).plane("e", "z", 5.0).spectrum(40, 0.8).seed(77).run(50000);
+let c = rad.simulation(g, s).plane("e", "z", 5.0).spectrum(40, 0.8).seed(78).run(50000);
+rad.assert_close(a.deposited("w"), b.deposited("w"), 0.0);
+rad.assert_close(a.deposited_err("w"), b.deposited_err("w"), 0.0);
+rad.assert_close(a.plane_count("e"), b.plane_count("e"), 0.0);
+rad.assert_close(a.escaped_energy(), b.escaped_energy(), 0.0);
+rad.assert_true(a.deposited("w") != c.deposited("w"));
+# the estimate converges: 50000 and 400000 histories agree within their errors
+let big = rad.simulation(g, s).plane("e", "z", 5.0).seed(77).run(400000);
+rad.assert_true(abs(a.deposited("w") - big.deposited("w")) < 5.0 * (a.deposited_err("w") + big.deposited_err("w")));
+a.save_regions("build/determinism_regions.csv");
+a.save_plane_spectrum("e", "build/determinism_spectrum.csv");
+a.save_leakage_spectrum("build/determinism_leak.csv");
+end _dsl_
+savedsl(p, out);

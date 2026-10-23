@@ -1,0 +1,32 @@
+# Pulse-height spectra: the Compton edge of a thin target, the full-energy peak of a large detector, and conservation of histories.
+out = ARGV.len() > 0 ? ARGV[0] : "build/pulse_height.dslb";
+p = _dsl_ cli="lmparticle";
+let water = rad.builtin("water");
+let nai = rad.builtin("nai");
+# 662 keV on a thin water film: single Compton scatters; the electron gets at most 2E^2/(m + 2E) = 0.4773 MeV (the Compton edge)
+let film = rad.geometry();
+film.slab("film", water, 0.0, 0.1);
+let s = rad.source();
+s.point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(0.662);
+let r = rad.simulation(film, s).spectrum(100, 0.7).pulse_height("film").seed(41).run(3000000);
+rad.assert_true(r.pulse_fraction("film", 0.40, 0.4773) > 0.0);
+# nothing above the edge for single scatters; double scatters in 1 mm of water are rare (mu t = 0.7% per photon)
+let below = r.pulse_fraction("film", 0.007, 0.4773);
+let above = r.pulse_fraction("film", 0.4773, 0.7);
+rad.assert_true(above < 0.02 * below);
+# the history count balances: histories with any deposit = P(interact) within a few percent
+let total = r.pulse_fraction("film", 0.0, 0.7);
+rad.assert_true(abs(total - (1.0 - pow(2.718281828459045, -0.1 * water.mu(0.662)))) < 0.0008);
+# a large NaI crystal at 662 keV: most histories end in the full-energy peak at 0.662 MeV
+let det = rad.geometry();
+det.box("crystal", nai, -10.0, 10.0, -10.0, 10.0, 10.0, 30.0);
+let s2 = rad.source();
+s2.point(0.0, 0.0, 0.0).beam(0.0, 0.0, 1.0).energy(0.662);
+let r2 = rad.simulation(det, s2).spectrum(100, 0.7).pulse_height("crystal").seed(42).run(200000);
+let peak = r2.pulse_fraction("crystal", 0.65, 0.7);   # bin width 7 keV: the line sits in the bin 658-665 keV
+rad.assert_true(peak > 0.85 && peak < 0.97);
+# every history in the crystal deposits something or the photon missed it (it did not: the beam is on axis)
+rad.assert_true(r2.pulse_fraction("crystal", 0.0, 0.7) > 0.99);
+r2.save_pulse_height("crystal", "build/pulse_height_crystal.csv");
+end _dsl_
+savedsl(p, out);

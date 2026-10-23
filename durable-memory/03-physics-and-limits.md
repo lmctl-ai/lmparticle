@@ -1,0 +1,44 @@
+# Physics and limits
+
+**Photon interactions** (analog; every photon is followed until absorbed, below the cutoff or lost):
+
+- Total and partial cross sections come from the material's attenuation tables: for each material the
+  elements' energy grids are merged (edges keep their below/above pair) and log-log interpolated.
+- *Photoelectric*: the photon is absorbed; its whole energy is deposited at the interaction point.
+  No K/L fluorescence.
+- *Compton (incoherent)*: free-electron Klein-Nishina angular and energy distribution, sampled exactly
+  (EGS4/Geant4 decomposition, validated against the numerical Klein-Nishina mean to 1e-3 at 0.02-6 MeV);
+  the electron's kinetic energy is deposited locally. The *total* incoherent cross section is XCOM's,
+  which includes binding (scattering function); the angular distribution does not (no binding or Doppler
+  broadening: matters below ~100 keV in high Z).
+- *Rayleigh (coherent)*: total from XCOM; angle sampled from Thomson (1+cos2)/2 times a Thomas-Fermi
+  screened form factor squared, F=1/(1+(q a)^2), a=0.468 A/Z^(1/3), with the scattering element chosen in
+  proportion to its coherent cross section. Approximate; `Sim.no_rayleigh()` removes the channel entirely.
+- *Pair production* (nuclear + electron field summed): the kinetic energy E-1.022 MeV is deposited at
+  the point; the positron annihilates at rest into two back-to-back isotropic 511 keV photons that are
+  transported (marked collided). No annihilation in flight, no triplet kinematics.
+- Photons below the cutoff (default and minimum 1 keV: the table limit) are absorbed on the spot. Maximum
+  energy 20 MeV.
+
+**Charged particles are not transported**: electrons and positrons deposit locally (kerma). Consequences:
+no electron-equilibrium buildup in depth-dose curves (they show kerma), no escape of secondary electrons
+from thin or small detectors (pulse-height spectra have no electron-escape or bremsstrahlung tails), no
+bremsstrahlung photons. Good for attenuation, shielding, buildup, energy-balance and detector counting
+questions with photons from tens of keV to a few MeV in low to medium Z; unsuitable for dose in thin layers
+of high Z, charged-particle ranges, or radiotherapy dosimetry.
+
+**Geometry**: a list of axis-aligned boxes; `slab` is a box infinite in x and y. Earlier boxes win where they
+overlap (the distance to the next boundary includes entering any higher-priority box). Outside all boxes is
+vacuum: photons travel on, and leave for good when no box lies ahead. After a boundary the photon is nudged 1e-8 cm
+into the next region. No curved surfaces, no rotations.
+
+**Tallies** (all per source photon, with the standard error of the mean from per-history sums, so a history that
+contributes several times, e.g. two plane crossings, is handled correctly):
+region energy deposition; infinite-plane forward crossings (count, uncollided count, energy, spectrum); leakage
+(count, uncollided count, energy, spectrum); interactions by process; per-history pulse height in a region.
+"Uncollided" means no interaction of any kind since birth; annihilation photons are always collided.
+
+**Reproducibility**: single thread; xoshiro256** seeded through splitmix64; one stream per run. Same program,
+same binary, same platform: identical bits. Across platforms the integer random stream is identical and only
+libm differences (log, exp, sin, cos in the last ulp) can change a rare branch, so cross-platform comparisons use
+statistical tolerances (the tests assert 4 standard errors).

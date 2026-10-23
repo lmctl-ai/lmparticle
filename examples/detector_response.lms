@@ -1,0 +1,18 @@
+# Pulse-height spectrum of a 7.6 x 7.6 cm NaI crystal (like a 3x3 inch detector) exposed to Cs-137 at 10 cm: photopeak and Compton continuum.
+out = ARGV.len() > 0 ? ARGV[0] : "build/detector_response.dslb";
+p = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+let nai = rad.builtin("nai");
+let g = rad.geometry();
+g.box("crystal", nai, -3.8, 3.8, -3.8, 3.8, 10.0, 17.6);
+let s = rad.source();
+s.point(0.0, 0.0, 0.0).isotropic().energy(0.662);
+let r = rad.simulation(g, s).spectrum(165, 0.825).pulse_height("crystal").seed(2024).run(2000000);
+let peak = r.pulse_fraction("crystal", 0.65, 0.7);
+let continuum = r.pulse_fraction("crystal", 0.05, 0.65);
+rad.print("fraction of emitted photons giving a full-energy pulse " + str(peak) + ", Compton continuum " + str(continuum));
+# the front face subtends 4.0% of the sphere; about a third of those photons end in the photopeak
+rad.assert_true(peak > 0.008 && peak < 0.03);
+rad.assert_true(continuum > 0.0 && continuum < peak);
+r.save_pulse_height("crystal", "build/examples/detector_response.csv");
+end _dsl_
+savedsl(p, out);

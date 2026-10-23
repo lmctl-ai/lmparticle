@@ -1,0 +1,37 @@
+# Cs-137 beam through lead: Monte Carlo uncollided transmission against exp(-mu x), and the total including scatter.
+# Two hosts in one script: lmparticle runs the Monte Carlo and writes a CSV, lmplot (gnuplot in a static binary) draws it.
+# Needs lmplot on PATH or installable; the PNG lands in build/examples/shielding_plot.png.
+mkdir("build/examples");
+sim = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+
+let pb = rad.builtin("lead");
+let s = rad.source();
+s.point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(0.662);
+let rows = "";
+for (i in range(0, 20)) {
+  let t = 0.2 * float(i + 1);
+  let g = rad.geometry();
+  g.slab("shield", pb, 0.0, t);
+  let r = rad.simulation(g, s).plane("exit", "z", t).seed(100 + i).run(100000);
+  rows = rows + str(t) + " " + str(pow(2.718281828459045, -pb.mu(0.662) * t)) + " " + str(r.plane_uncollided("exit")) + " " + str(r.plane_uncollided_err("exit")) + " " + str(r.plane_count("exit")) + "\n";
+}
+rad.save_text("build/examples/shielding_plot.csv", rows);
+end _dsl_
+savedsl(sim, "build/shielding_plot-sim.dslb");
+r = system ${dsl_cli(sim)} --dsl build/shielding_plot-sim.dslb;
+assert(r.code == 0);
+
+draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+plot.png("build/examples/shielding_plot.png", 900, 600);
+plot.cmd("set title 'Lead shielding of 662 keV photons (lmparticle Monte Carlo, drawn by lmplot)'");
+plot.cmd("set xlabel 'lead thickness [cm]'");
+plot.cmd("set ylabel 'transmission per photon'");
+plot.cmd("set logscale y");
+plot.cmd("set key top right");
+plot.cmd("plot 'build/examples/shielding_plot.csv' using 1:2 with lines lw 2 title 'exp(-mu x)', '' using 1:3:4 with yerrorbars pt 7 title 'uncollided (MC)', '' using 1:5 with linespoints title 'all forward crossings'");
+plot.close();
+end _dsl_
+savedsl(draw, "build/shielding_plot-draw.dslb");
+r = system ${dsl_cli(draw)} --dsl build/shielding_plot-draw.dslb;
+assert(r.code == 0);
+println("wrote build/examples/shielding_plot.png");

@@ -1,0 +1,495 @@
+{
+  "dsl.schema": 2,
+  "name": "lmparticle",
+  "types": {
+    "Rad": {
+      "methods": {
+        "builtin": [
+          {
+            "params": [
+              "string"
+            ],
+            "returns": "Material"
+          }
+        ],
+        "material": [
+          {
+            "params": [
+              "string",
+              "float"
+            ],
+            "returns": "Material"
+          }
+        ],
+        "klein_nishina": [
+          {
+            "params": [
+              "float"
+            ],
+            "returns": "float"
+          }
+        ],
+        "compton_mean_transfer": [
+          {
+            "params": [
+              "float"
+            ],
+            "returns": "float"
+          }
+        ],
+        "sample_compton_mean": [
+          {
+            "params": [
+              "float",
+              "int",
+              "int"
+            ],
+            "returns": "float"
+          }
+        ],
+        "geometry": [
+          {
+            "params": [],
+            "returns": "Geometry"
+          }
+        ],
+        "source": [
+          {
+            "params": [],
+            "returns": "Source"
+          }
+        ],
+        "simulation": [
+          {
+            "params": [
+              "Geometry",
+              "Source"
+            ],
+            "returns": "Sim"
+          }
+        ],
+        "assert_close": [
+          {
+            "params": [
+              "float",
+              "float",
+              "float"
+            ],
+            "returns": "void"
+          }
+        ],
+        "assert_true": [
+          {
+            "params": [
+              "bool"
+            ],
+            "returns": "void"
+          }
+        ],
+        "save_text": [
+          {
+            "params": [
+              "string",
+              "string"
+            ],
+            "returns": "void"
+          }
+        ],
+        "print": [
+          {
+            "params": [
+              "string"
+            ],
+            "returns": "void"
+          }
+        ],
+        "version": [
+          {
+            "params": [],
+            "returns": "string"
+          }
+        ]
+      }
+    },
+    "Material": {
+      "methods": {
+        "element": [
+          {
+            "params": [
+              "string",
+              "float"
+            ],
+            "returns": "Material"
+          }
+        ],
+        "name": [
+          {
+            "params": [],
+            "returns": "string"
+          }
+        ],
+        "density": [
+          {
+            "params": [],
+            "returns": "float"
+          }
+        ],
+        "mu": [
+          {
+            "params": [
+              "float"
+            ],
+            "returns": "float"
+          }
+        ],
+        "mu_mass": [
+          {
+            "params": [
+              "float"
+            ],
+            "returns": "float"
+          }
+        ],
+        "mu_partial": [
+          {
+            "params": [
+              "float",
+              "string"
+            ],
+            "returns": "float"
+          }
+        ],
+        "mfp": [
+          {
+            "params": [
+              "float"
+            ],
+            "returns": "float"
+          }
+        ],
+        "hvl": [
+          {
+            "params": [
+              "float"
+            ],
+            "returns": "float"
+          }
+        ]
+      }
+    },
+    "Geometry": {
+      "methods": {
+        "box": [
+          {
+            "params": [
+              "string",
+              "Material",
+              "float",
+              "float",
+              "float",
+              "float",
+              "float",
+              "float"
+            ],
+            "returns": "Geometry"
+          }
+        ],
+        "slab": [
+          {
+            "params": [
+              "string",
+              "Material",
+              "float",
+              "float"
+            ],
+            "returns": "Geometry"
+          }
+        ],
+        "regions": [
+          {
+            "params": [],
+            "returns": "int"
+          }
+        ]
+      }
+    },
+    "Source": {
+      "methods": {
+        "point": [
+          {
+            "params": [
+              "float",
+              "float",
+              "float"
+            ],
+            "returns": "Source"
+          }
+        ],
+        "beam": [
+          {
+            "params": [
+              "float",
+              "float",
+              "float"
+            ],
+            "returns": "Source"
+          }
+        ],
+        "isotropic": [
+          {
+            "params": [],
+            "returns": "Source"
+          }
+        ],
+        "energy": [
+          {
+            "params": [
+              "float"
+            ],
+            "returns": "Source"
+          }
+        ],
+        "line": [
+          {
+            "params": [
+              "float",
+              "float"
+            ],
+            "returns": "Source"
+          }
+        ]
+      }
+    },
+    "Sim": {
+      "methods": {
+        "plane": [
+          {
+            "params": [
+              "string",
+              "string",
+              "float"
+            ],
+            "returns": "Sim"
+          }
+        ],
+        "spectrum": [
+          {
+            "params": [
+              "int",
+              "float"
+            ],
+            "returns": "Sim"
+          }
+        ],
+        "pulse_height": [
+          {
+            "params": [
+              "string"
+            ],
+            "returns": "Sim"
+          }
+        ],
+        "cutoff": [
+          {
+            "params": [
+              "float"
+            ],
+            "returns": "Sim"
+          }
+        ],
+        "no_rayleigh": [
+          {
+            "params": [],
+            "returns": "Sim"
+          }
+        ],
+        "seed": [
+          {
+            "params": [
+              "int"
+            ],
+            "returns": "Sim"
+          }
+        ],
+        "run": [
+          {
+            "params": [
+              "int"
+            ],
+            "returns": "Result"
+          }
+        ]
+      }
+    },
+    "Result": {
+      "methods": {
+        "histories": [
+          {
+            "params": [],
+            "returns": "int"
+          }
+        ],
+        "source_energy": [
+          {
+            "params": [],
+            "returns": "float"
+          }
+        ],
+        "deposited": [
+          {
+            "params": [
+              "string"
+            ],
+            "returns": "float"
+          }
+        ],
+        "deposited_err": [
+          {
+            "params": [
+              "string"
+            ],
+            "returns": "float"
+          }
+        ],
+        "total_deposited": [
+          {
+            "params": [],
+            "returns": "float"
+          }
+        ],
+        "total_deposited_err": [
+          {
+            "params": [],
+            "returns": "float"
+          }
+        ],
+        "escaped": [
+          {
+            "params": [],
+            "returns": "float"
+          }
+        ],
+        "escaped_err": [
+          {
+            "params": [],
+            "returns": "float"
+          }
+        ],
+        "escaped_uncollided": [
+          {
+            "params": [],
+            "returns": "float"
+          }
+        ],
+        "escaped_uncollided_err": [
+          {
+            "params": [],
+            "returns": "float"
+          }
+        ],
+        "escaped_energy": [
+          {
+            "params": [],
+            "returns": "float"
+          }
+        ],
+        "plane_count": [
+          {
+            "params": [
+              "string"
+            ],
+            "returns": "float"
+          }
+        ],
+        "plane_count_err": [
+          {
+            "params": [
+              "string"
+            ],
+            "returns": "float"
+          }
+        ],
+        "plane_uncollided": [
+          {
+            "params": [
+              "string"
+            ],
+            "returns": "float"
+          }
+        ],
+        "plane_uncollided_err": [
+          {
+            "params": [
+              "string"
+            ],
+            "returns": "float"
+          }
+        ],
+        "plane_energy": [
+          {
+            "params": [
+              "string"
+            ],
+            "returns": "float"
+          }
+        ],
+        "interactions": [
+          {
+            "params": [
+              "string"
+            ],
+            "returns": "float"
+          }
+        ],
+        "pulse_fraction": [
+          {
+            "params": [
+              "string",
+              "float",
+              "float"
+            ],
+            "returns": "float"
+          }
+        ],
+        "save_pulse_height": [
+          {
+            "params": [
+              "string",
+              "string"
+            ],
+            "returns": "void"
+          }
+        ],
+        "save_regions": [
+          {
+            "params": [
+              "string"
+            ],
+            "returns": "void"
+          }
+        ],
+        "save_plane_spectrum": [
+          {
+            "params": [
+              "string",
+              "string"
+            ],
+            "returns": "void"
+          }
+        ],
+        "save_leakage_spectrum": [
+          {
+            "params": [
+              "string"
+            ],
+            "returns": "void"
+          }
+        ]
+      }
+    }
+  },
+  "functions": {},
+  "context": {
+    "rad": "Rad"
+  }
+}

@@ -1,0 +1,73 @@
+# Narrow-beam attenuation: the uncollided transmission through matter is exp(-mu x), whatever the layers and geometry.
+out = ARGV.len() > 0 ? ARGV[0] : "build/attenuation.dslb";
+p = _dsl_ cli="lmparticle";
+let e1 = 2.718281828459045;
+let pb = rad.builtin("lead");
+let water = rad.builtin("water");
+let al = rad.builtin("aluminum");
+
+# 1 cm of lead at 662 keV (Cs-137): exp(-mu x) = 0.286; 200000 histories give a standard error of 0.001
+let g = rad.geometry();
+g.slab("lead", pb, 0.0, 1.0);
+let s = rad.source();
+s.point(0.0, 0.0, -5.0).beam(0.0, 0.0, 1.0).energy(0.662);
+let r = rad.simulation(g, s).plane("exit", "z", 1.0).seed(11).run(200000);
+let want = pow(e1, -pb.mu(0.662));
+rad.assert_close(want, 0.2868, 0.002);
+rad.assert_true(abs(r.plane_uncollided("exit") - want) < 4.0 * r.plane_uncollided_err("exit"));
+# scattered photons add to the total crossing count
+rad.assert_true(r.plane_count("exit") > r.plane_uncollided("exit"));
+# the plane in front of the slab sees every photon
+let r0 = rad.simulation(g, s).plane("entry", "z", 0.0).seed(11).run(1000);
+rad.assert_close(r0.plane_count("entry"), 1.0, 0.0);
+rad.assert_close(r0.plane_uncollided("entry"), 1.0, 0.0);
+
+# 10 cm of water at 1 MeV, and one half-value layer: half the beam is left
+let g2 = rad.geometry();
+g2.slab("water", water, 0.0, 10.0);
+let r2 = rad.simulation(g2, s).plane("exit", "z", 10.0).seed(12).run(200000);
+rad.assert_true(abs(r2.plane_uncollided("exit") - pow(e1, -10.0 * water.mu(0.662))) < 4.0 * r2.plane_uncollided_err("exit"));
+let s1 = rad.source();
+s1.point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(1.0);
+let g3 = rad.geometry();
+g3.slab("hvl", water, 0.0, water.hvl(1.0));
+let r3 = rad.simulation(g3, s1).plane("exit", "z", water.hvl(1.0)).seed(13).run(200000);
+rad.assert_true(abs(r3.plane_uncollided("exit") - 0.5) < 4.0 * r3.plane_uncollided_err("exit"));
+
+# layers multiply: 2 cm aluminum, a 1 cm vacuum gap, then 0.5 cm lead, at 300 keV
+let g4 = rad.geometry();
+g4.slab("al", al, 0.0, 2.0).slab("pb", pb, 3.0, 3.5);
+let s3 = rad.source();
+s3.point(0.0, 0.0, -2.0).beam(0.0, 0.0, 1.0).energy(0.3);
+let r4 = rad.simulation(g4, s3).plane("exit", "z", 3.5).seed(14).run(200000);
+let want4 = pow(e1, -2.0 * al.mu(0.3) - 0.5 * pb.mu(0.3));
+rad.assert_true(abs(r4.plane_uncollided("exit") - want4) < 4.0 * r4.plane_uncollided_err("exit"));
+
+# an oblique beam crosses the slab on a longer path, x / cos(theta); direction (1, 0, 1) is 45 degrees
+let s4 = rad.source();
+s4.point(-1.0, 0.0, -1.0).beam(1.0, 0.0, 1.0).energy(1.0);
+let g5 = rad.geometry();
+g5.slab("water", water, 0.0, 5.0);
+let r5 = rad.simulation(g5, s4).plane("exit", "z", 5.0).seed(15).run(200000);
+let want5 = pow(e1, -5.0 * 1.414213562373095 * water.mu(1.0));
+rad.assert_true(abs(r5.plane_uncollided("exit") - want5) < 4.0 * r5.plane_uncollided_err("exit"));
+
+# a finite box, hit from outside, along x: 4 cm of aluminum, then the beam escapes the geometry: uncollided escape fraction
+let g6 = rad.geometry();
+g6.box("block", al, 0.0, 4.0, -10.0, 10.0, -10.0, 10.0);
+let s5 = rad.source();
+s5.point(-3.0, 0.0, 0.0).beam(1.0, 0.0, 0.0).energy(0.2);
+let r6 = rad.simulation(g6, s5).seed(16).run(200000);
+rad.assert_true(abs(r6.escaped_uncollided() - pow(e1, -4.0 * al.mu(0.2))) < 4.0 * r6.escaped_uncollided_err());
+
+# turning Rayleigh scattering off removes its share of the attenuation (lead, 150 keV)
+let g7 = rad.geometry();
+g7.slab("pb", pb, 0.0, 0.2);
+let s6 = rad.source();
+s6.point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(0.15);
+let r7 = rad.simulation(g7, s6).plane("exit", "z", 0.2).no_rayleigh().seed(17).run(200000);
+let mu_no = pb.mu(0.15) - pb.mu_partial(0.15, "rayleigh");
+rad.assert_true(abs(r7.plane_uncollided("exit") - pow(e1, -0.2 * mu_no)) < 4.0 * r7.plane_uncollided_err("exit"));
+rad.assert_true(pb.mu_partial(0.15, "rayleigh") > 0.01);
+end _dsl_
+savedsl(p, out);

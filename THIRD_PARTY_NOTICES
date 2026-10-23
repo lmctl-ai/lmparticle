@@ -1,0 +1,30 @@
+Third-party notices for lmparticle
+==================================
+
+lmparticle's own code (cpp/, schema/, scripts/, examples/, tests/; including the vendored `cpp/dslvm.hpp`
+runtime from the cpp-dsl-sdk project) is Copyright (c) 2026 Lattice Systems LLC, MIT license (see
+LICENSE). `lmparticle --notices` prints this file. There is no third-party source code in the binary.
+
+NIST XCOM photon cross-section data
+-----------------------------------
+The attenuation tables embedded in every lmparticle binary (data/xcom.csv) are values of the NIST XCOM
+database for the elements H, C, N, O, Na, Mg, Al, Si, P, S, Ar, K, Ca, Fe, Cu, Ge, I, W and Pb
+(coherent, incoherent, photoelectric and pair-production coefficients, 1 keV to 20 MeV), retrieved
+from https://physics.nist.gov/PhysRefData/Xcom/html/xcom1.html with scripts/fetch-xcom.py.
+Compounds and mixtures are formed from them by the mixture rule.
+
+  M.J. Berger, J.H. Hubbell, S.M. Seltzer, J. Chang, J.S. Coursey, R. Sukumar, D.S. Zucker, and K. Olsen,
+  XCOM: Photon Cross Sections Database, NIST Standard Reference Database 8 (XGAM), NBSIR 87-3597,
+  National Institute of Standards and Technology, Gaithersburg, MD (1998). DOI: 10.18434/T48G6X
+
+NIST data are produced by employees of the United States Government and are not subject to copyright in
+the United States (17 U.S.C. 105); NIST asks that the database be cited, which is done here. The data
+are provided "as is" without warranty. Material compositions follow the NIST "Composition of Materials"
+tables (X-Ray Mass Attenuation Coefficients, Hubbell and Seltzer, NISTIR 5632).
+
+Physics models
+--------------
+Klein-Nishina cross section and sampling (Klein and Nishina 1929; the sampling decomposition is that of the
+EGS4 and Geant4 codes, re-implemented here from the published algorithm), xoshiro256** random numbers
+(Blackman and Vigna, public domain) and splitmix64 seeding are implemented from their published
+descriptions; no code of EGS, Geant4 or MCNP is included.
