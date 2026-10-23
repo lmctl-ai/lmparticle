@@ -9,6 +9,7 @@ Every test asserts a closed form or a published value, not a number taken from t
 - **Klein-Nishina** (`tests/klein_nishina.lms`, `tests/core.cpp`): 0.2112 b at 1 MeV, 0.2866 b at 511 keV,
   Thomson limit 0.6652 b; mean energy transfer 0.4400 at 1 MeV; the sampler's mean E'/E equals the numerical
   integral at five energies (2e6 samples, 1e-3) and the sampled angle satisfies the Compton relation exactly.
+  The sampled mean cos(theta) equals the Simpson integral of dsigma/dOmega at 10 keV-10 MeV (4e5 samples, 0.004).
 - **Narrow beam** (`tests/attenuation.lms`): uncollided transmission = exp(-mu x) within 4 standard errors for
   one slab (lead 662 keV), a half-value layer (0.5), layered media with a vacuum gap, an oblique beam
   (x/cos), a finite box, a source inside the slab, and with Rayleigh switched off.

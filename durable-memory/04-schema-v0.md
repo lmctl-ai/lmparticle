@@ -14,6 +14,9 @@ ones). The DSL has no exponent literals (`1e-24` is invalid) and no `exp`/`log`:
 `plane_count` counts forward crossings (positive direction along the axis) of the infinite plane,
 `plane_uncollided` those of photons that never interacted. `pulse_fraction(region, lo, hi)` sums the
 bins whose lower edge lies in `[lo, hi)`: bin resolution is `emax/bins` set by `spectrum`.
+Energies above `emax` are not tallied in spectra or pulse-height histograms (no pile-up in the last bin);
+`emax` itself falls in the last bin. Nonfinite numbers (inf from `pow` overflow, NaN) are refused for
+densities, mass fractions, source positions, line weights and plane positions (exit 3).
 
 CSV outputs are space-separated with `%.10g`: regions `name deposit err`; spectra
 `e_low e_high value err` (gnuplot reads them directly).
