@@ -335,12 +335,12 @@ Result run(const Geometry &geo, const Source &src, const Config &cfg, int64_t hi
         }
         for (int a = 0; a < 3; a++) ph.x[a] += dist * ph.d[a];
       };
-      auto escape = [&]() {
+      auto escape = [&]() {  // recorded where the photon was last seen: the surface it left through, or its origin
+        record("escape");
         leak.add(0, ph.w);
         if (ph.uncollided) leak.add(1, ph.w);
         leak.add(2, ph.e * ph.w);
         if (bin_of(ph.e) >= 0) lspec.add(bin_of(ph.e), ph.w);
-        record("escape");
         alive = false;
       };
       record(ph.secondary ? "annihilation" : "source");
@@ -362,9 +362,9 @@ Result run(const Geometry &geo, const Source &src, const Config &cfg, int64_t hi
             Hit hb = entry_hit(geo.boxes[b], ph.x, ph.d);
             if (hb.t < best.t) { best = hb; into = b; }
           }
-          if (best.t == kInf) {  // leaves the geometry for good
-            advance(kInf);
+          if (best.t == kInf) {  // leaves the geometry for good: score the planes still ahead, then the leakage
             escape();
+            advance(kInf);
           } else {
             advance(best.t);
             cross(geo.boxes[into], ph, best, false);

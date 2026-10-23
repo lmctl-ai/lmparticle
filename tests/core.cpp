@@ -310,6 +310,13 @@ int main() {
     }
     std::string lastev = rk.tracks.back().event;
     CHECK(lastev == "escape" || lastev == "photo" || lastev == "cutoff" || lastev == "pair");
+    // an escape is recorded at the surface the photon left through (finite), never at infinity: the thin film
+    // lets nearly every photon through, so its track ends on the film's far face at z = 0.001
+    Result rf2 = run(thin, s, a, 50);
+    int escapes = 0;
+    for (const TrackPoint &t : rf2.tracks)
+      if (std::string(t.event) == "escape") { escapes++; CHECK(std::isfinite(t.x[0]) && std::isfinite(t.x[2])); CHECK(std::fabs(t.x[2] - 0.001) < 1e-6 || std::fabs(t.x[2]) < 1e-6); }
+    CHECK(escapes > 40);
   }
   // user element tables: a two-row table interpolates log-log; malformed tables are refused
   {
