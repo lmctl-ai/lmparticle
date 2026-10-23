@@ -40,5 +40,19 @@ rad.assert_close(h.mu_partial(1.0, "compton") * 1.00794 / 6022140760000000000000
 # other builtin materials load and attenuate sensibly
 rad.assert_true(rad.builtin("concrete").mu_mass(1.0) > 0.05);
 rad.assert_true(rad.builtin("copper").mu_mass(0.1) > rad.builtin("copper").mu_mass(1.0));
+# the mixture rule holds across an element's absorption edge (iodine K edge, 33.17 keV, in NaI) to the 4-digit tables
+let na = rad.material("na", 1.0).element("Na", 1.0);
+let io = rad.material("i", 1.0).element("I", 1.0);
+let nai = rad.builtin("nai");
+let lo_mix = 0.153373 * na.mu_mass(0.0331) + 0.846627 * io.mu_mass(0.0331);
+let hi_mix = 0.153373 * na.mu_mass(0.0333) + 0.846627 * io.mu_mass(0.0333);
+rad.assert_close(nai.mu_mass(0.0331) / lo_mix, 1.0, 0.0001);
+rad.assert_close(nai.mu_mass(0.0333) / hi_mix, 1.0, 0.0001);
+rad.assert_true(nai.mu_mass(0.0333) > 3.0 * nai.mu_mass(0.0331));
+# a custom material can still get elements after it was queried: hydrogen, then oxygen added, is water by the mixture rule
+let hw = rad.material("built up", 1.0).element("H", 0.111894);
+rad.assert_true(hw.mu_mass(1.0) > 0.12);
+hw.element("O", 0.888106);
+rad.assert_close(hw.mu_mass(1.0), w.mu_mass(1.0), 0.0000001);
 end _dsl_
 savedsl(p, out);

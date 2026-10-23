@@ -35,7 +35,7 @@ ok "native physics core regression tests"
 want_version="lmparticle $(sed -n 's/^project(lmparticle VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)"
 [ "$("$HOST" --version)" = "$want_version" ] || fail "--version is not exactly '$want_version'"
 ok "--version prints exactly '$want_version'"
-python3 scripts/gen-schema.py >/dev/null && git diff --quiet -- schema/lmparticle.dsl.json 2>/dev/null || [ ! -d .git ] || fail "schema/lmparticle.dsl.json is stale: run scripts/gen-schema.py"
+python3 scripts/gen-schema.py >/dev/null && git diff --quiet -- schema/lmparticle.dsl.json 2>/dev/null || ! git rev-parse --git-dir >/dev/null 2>&1 || fail "schema/lmparticle.dsl.json is stale: run scripts/gen-schema.py"
 ok "schema matches the registrations in cpp/main.cpp"
 "$HOST" --dsl-schema --json >"$WORK/schema.json" || fail "embedded schema print"
 cmp -s "$WORK/schema.json" schema/lmparticle.dsl.json || fail "embedded schema differs from schema/lmparticle.dsl.json"
@@ -116,7 +116,14 @@ expect_error source_energy 'let s = rad.source(); s.energy(0.0001);' "energy mus
 expect_error unwritable 'rad.save_text("/nonexistent-dir/x.csv", "x");' "cannot write"
 expect_error assertfail 'rad.assert_close(1.0, 2.0, 0.1);' "assert_close failed"
 expect_error assert_true 'rad.assert_true(false);' "assert_true failed"
-ok "errors stop with exit 3 and clear messages (18 cases)"
+# nonfinite numbers (pow overflow gives inf, inf - inf NaN) are refused where they would poison a run
+expect_error nan_point 'let i = pow(10.0, 400.0); let s = rad.source(); s.point(0.0, 0.0, i - i);' "coordinates must be finite"
+expect_error inf_density 'let m = rad.material("x", pow(10.0, 400.0));' "density must be positive and finite"
+expect_error inf_fraction 'let m = rad.material("x", 1.0).element("H", pow(10.0, 400.0));' "mass fraction must be positive and finite"
+expect_error inf_weight 'let s = rad.source(); s.line(1.0, pow(10.0, 400.0));' "weight must be positive and finite"
+expect_error nan_plane 'let g = rad.geometry(); g.slab("a", rad.builtin("water"), 0.0, 1.0); let s = rad.source(); s.energy(1.0); let i = pow(10.0, 400.0); let q = rad.simulation(g, s).plane("p", "z", i - i);' "position must be finite"
+expect_error builtin_change 'let m = rad.builtin("water").element("Pb", 1.0);' "builtin material cannot be changed"
+ok "errors stop with exit 3 and clear messages (24 cases)"
 
 # Combined pipelines (lmparticle simulates, lmplot draws). Need lmplot on PATH, or network for install=.
 if command -v lmplot >/dev/null 2>&1 || [ "${LMPARTICLE_TEST_NETWORK:-}" = 1 ]; then

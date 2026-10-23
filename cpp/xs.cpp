@@ -73,11 +73,11 @@ std::vector<std::string> element_symbols() {
 
 Material::Material(std::string name, double density, std::vector<std::pair<std::string, double>> frac)
     : name_(std::move(name)), density_(density) {
-  if (!(density > 0)) throw std::runtime_error("material '" + name_ + "': density must be positive");
+  if (!(density > 0) || !std::isfinite(density)) throw std::runtime_error("material '" + name_ + "': density must be positive and finite");
   if (frac.empty()) throw std::runtime_error("material '" + name_ + "': add at least one element");
   double sum = 0;
   for (auto &f : frac) {
-    if (!(f.second > 0)) throw std::runtime_error("material '" + name_ + "': mass fraction of " + f.first + " must be positive");
+    if (!(f.second > 0) || !std::isfinite(f.second)) throw std::runtime_error("material '" + name_ + "': mass fraction of " + f.first + " must be positive");
     sum += f.second;
   }
   for (auto &f : frac) {

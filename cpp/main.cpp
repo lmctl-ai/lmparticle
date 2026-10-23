@@ -30,6 +30,7 @@ struct MaterialSpec {
   double density = 0;
   std::vector<std::pair<std::string, double>> fractions;
   std::shared_ptr<const Material> built;
+  bool builtin = false;
   const Material &get() {
     if (!built) built = std::make_shared<const Material>(name, density, fractions);
     return *built;
@@ -99,12 +100,12 @@ void register_host(dslvm::Registry &r, Host &h) {
   // ---------------------------------------------------------------- Rad
   method(r, "Rad", "builtin", {"string"}, "Material", [&h](void *, Args &a) {
     auto m = builtin_material(a[0].s);
-    MaterialSpec s{m->name(), m->density(), m->fractions(), m};
+    MaterialSpec s{m->name(), m->density(), m->fractions(), m, true};
     return h.hold(h.materials, "Material", std::move(s));
   });
   method(r, "Rad", "material", {"string", "float"}, "Material", [&h](void *, Args &a) {
-    need(a[1].f > 0, "Rad.material: density must be positive (g/cm3)");
-    return h.hold(h.materials, "Material", MaterialSpec{a[0].s, a[1].f, {}, nullptr});
+    need(a[1].f > 0 && std::isfinite(a[1].f), "Rad.material: density must be positive and finite (g/cm3)");
+    return h.hold(h.materials, "Material", MaterialSpec{a[0].s, a[1].f, {}, nullptr, false});
   });
   method(r, "Rad", "klein_nishina", {"float"}, "float", [](void *, Args &a) { return Value::real(klein_nishina_total(energy_arg(a[0].f, "Rad.klein_nishina"))); });
   method(r, "Rad", "compton_mean_transfer", {"float"}, "float", [](void *, Args &a) { return Value::real(compton_mean_transfer(energy_arg(a[0].f, "Rad.compton_mean_transfer"))); });
@@ -140,9 +141,9 @@ void register_host(dslvm::Registry &r, Host &h) {
   // ---------------------------------------------------------------- Material
   method(r, "Material", "element", {"string", "float"}, "Material", [](void *p, Args &a) {
     auto &m = obj<MaterialSpec>(p);
-    need(!m.built || m.fractions.empty(), "Material.element: a builtin material cannot be changed");
+    need(!m.builtin, "Material.element: a builtin material cannot be changed");
     element(a[0].s);  // validates the symbol now
-    need(a[1].f > 0, "Material.element: mass fraction must be positive");
+    need(a[1].f > 0 && std::isfinite(a[1].f), "Material.element: mass fraction must be positive and finite");
     m.fractions.emplace_back(a[0].s, a[1].f);
     m.built.reset();
     return Value::object("Material", p);
@@ -194,6 +195,7 @@ void register_host(dslvm::Registry &r, Host &h) {
 
   // ---------------------------------------------------------------- Source
   method(r, "Source", "point", {"float", "float", "float"}, "Source", [](void *p, Args &a) {
+    need(std::isfinite(a[0].f) && std::isfinite(a[1].f) && std::isfinite(a[2].f), "Source.point: coordinates must be finite (cm)");
     for (int i = 0; i < 3; i++) obj<Source>(p).pos[i] = a[i].f;
     return Value::object("Source", p);
   });
@@ -211,7 +213,7 @@ void register_host(dslvm::Registry &r, Host &h) {
     return Value::object("Source", p);
   });
   method(r, "Source", "line", {"float", "float"}, "Source", [](void *p, Args &a) {
-    need(a[1].f > 0, "Source.line: weight must be positive");
+    need(a[1].f > 0 && std::isfinite(a[1].f), "Source.line: weight must be positive and finite");
     obj<Source>(p).lines.emplace_back(energy_arg(a[0].f, "Source.line"), a[1].f);
     return Value::object("Source", p);
   });
@@ -221,6 +223,7 @@ void register_host(dslvm::Registry &r, Host &h) {
     auto &c = obj<SimSpec>(p).cfg;
     int axis = a[1].s == "x" ? 0 : a[1].s == "y" ? 1 : a[1].s == "z" ? 2 : -1;
     need(axis >= 0, "Sim.plane: axis must be x, y or z");
+    need(std::isfinite(a[2].f), "Sim.plane: position must be finite (cm)");
     for (auto &pl : c.planes) need(pl.name != a[0].s, "Sim.plane: duplicate plane name '" + a[0].s + "'");
     c.planes.push_back({a[0].s, axis, a[2].f});
     return Value::object("Sim", p);
