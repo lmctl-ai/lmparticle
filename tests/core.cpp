@@ -80,6 +80,68 @@ int main() {
   CHECK(a1.escaped.mean == a2.escaped.mean);
   CHECK(a1.interactions[kPair].mean > 0);
 
+  // Klein-Nishina angular distribution: the sampled mean cos(theta) equals the integral of dsigma/dOmega,
+  // proportional to P^2 (P + 1/P - sin^2) with P = E'/E = 1/(1 + k(1 - cos)), done here by Simpson's rule in cos.
+  for (double e : {0.01, 0.1, 0.662, 2.0, 10.0}) {
+    double k = e / kElectronMassMeV, num = 0, den = 0;
+    const int m = 20000;
+    for (int i = 0; i <= m; i++) {
+      double c = -1 + 2.0 * i / m, P = 1 / (1 + k * (1 - c)), w = (i == 0 || i == m) ? 1 : (i % 2 ? 4 : 2);
+      double f = P * P * (P + 1 / P - (1 - c * c));
+      num += w * f * c;
+      den += w * f;
+    }
+    Rng rng(11);
+    double sc = 0;
+    const int ns = 400000;
+    for (int i = 0; i < ns; i++) { double cost; sample_compton(e, rng, &cost); sc += cost; }
+    NEAR(sc / ns, num / den, 0.004);  // standard error of the mean is below 0.0009
+  }
+
+  // a source on the high face of a slab pointing into it is inside the slab's reach: uncollided = exp(-mu x)
+  {
+    Geometry g;
+    auto water = builtin_material("water");
+    g.boxes.push_back({"w", water, {-INFINITY, -INFINITY, 0}, {INFINITY, INFINITY, 10}});
+    Source s;
+    s.isotropic = false;
+    s.dir[2] = -1;
+    s.pos[2] = 10;
+    s.lines.push_back({1.0, 1.0});
+    Config c;
+    Result r = run(g, s, c, 100000);
+    double want = std::exp(-10 * water->mu_total(1.0));
+    CHECK(std::fabs(r.escaped_uncollided.mean - want) < 4 * r.escaped_uncollided.err);
+    CHECK(r.total_deposited.mean > 0.1);
+  }
+  // spectrum entries above the upper edge are not tallied (no fake peak in the last bin); emax itself is the last bin
+  {
+    Geometry g;
+    g.boxes.push_back({"w", builtin_material("water"), {-INFINITY, -INFINITY, 0}, {INFINITY, INFINITY, 1}});
+    Source s;
+    s.isotropic = false;
+    s.pos[2] = -1;
+    s.lines.push_back({1.0, 1.0});
+    Config c;
+    c.bins = 10;
+    c.emax = 0.5;
+    c.planes.push_back({"exit", 2, 1.0});
+    Result r = run(g, s, c, 20000);
+    double sum = 0;
+    for (auto &b : r.plane_spectrum[0]) sum += b.mean;
+    CHECK(sum < r.plane_count[0].mean - r.plane_uncollided[0].mean + 1e-12);  // uncollided 1 MeV photons are above 0.5
+    c.emax = 1.0;
+    Result r2 = run(g, s, c, 20000);
+    CHECK(r2.plane_spectrum[0][9].mean >= r2.plane_uncollided[0].mean);
+  }
+  // nonfinite material parameters are refused
+  threw = false;
+  try { Material m("x", INFINITY, {{"H", 1.0}}); } catch (const std::exception &) { threw = true; }
+  CHECK(threw);
+  threw = false;
+  try { Material m("x", 1.0, {{"H", INFINITY}}); } catch (const std::exception &) { threw = true; }
+  CHECK(threw);
+
   if (failures) { std::fprintf(stderr, "%d failures\n", failures); return 1; }
   std::puts("core tests passed");
   return 0;

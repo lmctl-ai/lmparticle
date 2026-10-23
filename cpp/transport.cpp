@@ -76,7 +76,7 @@ double entry_distance(const Box &b, const double x[3], const double d[3]) {
     tmax = std::min(tmax, t2);
     if (tmin >= tmax) return kInf;
   }
-  return tmin > 0 ? tmin : kInf;
+  return tmin;  // 0 when the ray starts on a face (x == hi counts as outside) and points into the box
 }
 // Distance to leave the box the ray is inside.
 double exit_distance(const Box &b, const double x[3], const double d[3]) {
@@ -158,6 +158,7 @@ Result run(const Geometry &geo, const Source &src, const Config &cfg, int64_t hi
     emax_src = std::max(emax_src, l.first);
     esrc += l.second * l.first;
   }
+  if (!(wsum > 0) || !std::isfinite(wsum)) throw std::runtime_error("run: source line weights must be positive and finite");
   esrc = 0;  // realized mean source energy, accumulated below
   const double emax = cfg.emax > 0 ? cfg.emax : emax_src * 1.0000001;
   const int bins = cfg.bins;
@@ -166,7 +167,8 @@ Result run(const Geometry &geo, const Source &src, const Config &cfg, int64_t hi
   Rng rng(cfg.seed);
   std::vector<Photon> stack;
   auto deposit = [&](int r, double x) { dep.add(r, x); tot.add(0, x); };
-  auto bin_of = [&](double e) { return std::min(bins - 1, static_cast<int>(e / emax * bins)); };
+  // Spectrum bin of an energy; -1 above the upper edge (not tallied; emax itself, up to rounding, is the last bin).
+  auto bin_of = [&](double e) { return e > emax * (1 + 1e-9) ? -1 : std::min(bins - 1, static_cast<int>(e / emax * bins)); };
 
   for (int64_t h = 0; h < histories; h++) {
     Photon p;
@@ -200,7 +202,7 @@ Result run(const Geometry &geo, const Source &src, const Config &cfg, int64_t hi
             pcount.add(k, 1);
             if (ph.uncollided) punc.add(k, 1);
             pen.add(k, ph.e);
-            pspec.add(k * bins + bin_of(ph.e), 1);
+            if (bin_of(ph.e) >= 0) pspec.add(k * bins + bin_of(ph.e), 1);
           }
         }
         for (int a = 0; a < 3; a++) ph.x[a] += dist * ph.d[a];
@@ -211,7 +213,7 @@ Result run(const Geometry &geo, const Source &src, const Config &cfg, int64_t hi
           int r = -1;
           for (size_t b = 0; b < nbox; b++) if (inside(geo.boxes[b], ph.x)) { r = static_cast<int>(b); break; }
           if (r >= 0) deposit(r, ph.e);
-          else { leak.add(0, 1); leak.add(2, ph.e); lspec.add(bin_of(ph.e), 1); }
+          else { leak.add(0, 1); leak.add(2, ph.e); if (bin_of(ph.e) >= 0) lspec.add(bin_of(ph.e), 1); }
           alive = false;
           break;
         }
@@ -225,7 +227,7 @@ Result run(const Geometry &geo, const Source &src, const Config &cfg, int64_t hi
             leak.add(0, 1);
             if (ph.uncollided) leak.add(1, 1);
             leak.add(2, ph.e);
-            lspec.add(bin_of(ph.e), 1);
+            if (bin_of(ph.e) >= 0) lspec.add(bin_of(ph.e), 1);
             alive = false;
           } else {
             advance(t + kNudge);
@@ -275,7 +277,7 @@ Result run(const Geometry &geo, const Source &src, const Config &cfg, int64_t hi
     }
     for (size_t k = 0; k < cfg.pulse_regions.size(); k++) {
       double x = dep.cur[cfg.pulse_regions[k]];
-      if (x > 0) pulse.add(k * bins + bin_of(x), 1);
+      if (x > 0 && bin_of(x) >= 0) pulse.add(k * bins + bin_of(x), 1);
     }
     pulse.end_history(); tot.end_history(); dep.end_history(); pcount.end_history(); punc.end_history(); pen.end_history(); pspec.end_history();
     lspec.end_history(); leak.end_history(); proc.end_history();
