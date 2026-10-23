@@ -4,6 +4,10 @@ Seeded Monte Carlo photon transport with NIST XCOM cross sections: shielding, de
 questions answered by a 2.5 MB executable that an `lmctl autorun` command fetches for you. Every picture below is
 made by the example it links to; run the command under it from any empty directory.
 
+[![CI](https://github.com/lmctl-ai/lmparticle/actions/workflows/ci.yml/badge.svg)](https://github.com/lmctl-ai/lmparticle/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/lmctl-ai/lmparticle?label=release)](https://github.com/lmctl-ai/lmparticle/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 ### Shielding design
 
 | Tenth-value layers | Source in a lead pot | Streaming through a slit |
@@ -137,9 +141,6 @@ solid angle of a detector seen from an isotropic source and from a cone, region 
 analog transport, and bitwise reproducibility.
 
 ## Build
-
-[![CI](https://github.com/lmctl-ai/lmparticle/actions/workflows/ci.yml/badge.svg)](https://github.com/lmctl-ai/lmparticle/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 C++17 compiler, CMake 3.24; nothing else (no third-party sources).
 
