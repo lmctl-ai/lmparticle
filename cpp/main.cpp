@@ -324,8 +324,8 @@ void register_host(dslvm::Registry &r, Host &h) {
     // cell) and the Result kept in the arena (one Stat per cell) do not fit the memory budget.
     const size_t bins = (size_t)s.cfg.bins, npl = s.cfg.planes.size(), npulse = s.cfg.pulse_regions.size();
     const size_t nbox = s.geo.boxes.size();
-    const double cells = double(nbox + 1 + 3 * npl + 7) + double(npulse + npl + 1) * double(bins);
-    const double kept = double(nbox + 3 * npl) + double(npl + npulse + 1) * double(bins);
+    const double cells = double(2 * nbox + 1 + 3 * npl + 7) + double(npulse + npl + 1) * double(bins);
+    const double kept = double(2 * nbox + 3 * npl) + double(npl + npulse + 1) * double(bins);
     const double bytes = cells * (4 * sizeof(double) + 1) + kept * sizeof(Stat);
     membudget::require(bytes < 1e18 ? (size_t)bytes : SIZE_MAX);
     return h.hold(h.results, "Result", run(s.geo, s.src, s.cfg, a[0].i));
