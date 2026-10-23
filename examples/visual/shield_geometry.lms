@@ -1,0 +1,42 @@
+# Four independent finite shields. Colors of exit beams encode MC uncollided transmission.
+mkdir("build/visuals");
+mkdir("docs/images");
+compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+let pb=rad.builtin("lead");
+let src=rad.source().point(0.0,0.0,-2.0).beam(0.0,0.0,1.0).energy(0.662);
+let rows="t,x,y,z,r,g,b\n";
+for (i in range(0,4)) {
+  let thickness=0.25*pow(2.0,float(i));
+  let g=rad.geometry().box("shield",pb,-0.75,0.75,-0.75,0.75,0.0,thickness);
+  let result=rad.simulation(g,src).plane("out","z",thickness).seed(700+i).run(100000);
+  let u=result.plane_uncollided("out");
+  rad.assert_true(abs(u-pow(2.718281828459045, -pb.mu(0.662)*thickness))<6.0*result.plane_uncollided_err("out"));
+  rows=rows+str(i)+","+str(thickness)+","+str(u)+",0,0.15,"+str(0.12+0.8*u)+","+str(0.15+0.8*u)+"\n";
+}
+rad.save_text("build/visuals/shield_geometry.csv",rows);
+end _dsl_
+savedsl(compute,"build/visuals/shield_geometry-compute.dslb");
+r=system ${dsl_cli(compute)} --dsl build/visuals/shield_geometry-compute.dslb;
+assert(r.code==0,r.stdout+r.stderr);
+draw=_dsl_ cli="lmcad" install="github:lmctl-ai/lmcad@latest";
+scene.background(0.035,0.055,0.095);
+scene.ambient(0.32);
+scene.supersample(2);
+scene.directional_light(-0.6,-1.0,-0.8,0.85);
+scene.fill_light(0.8,-0.1,0.5,0.45);
+let rows=read_keyframes_csv("build/visuals/shield_geometry.csv");
+for(i in range(0,rows.len())) {
+  let row=rows.at(i);
+  let x=(float(i)-1.5)*2.3;
+  scene.box(1.5,1.5,row.x(),material().color(0.65,0.5,0.3)).position(x,0.0,0.5*row.x());
+  # Incoming collimated beam and transmitted beam are schematics, not sampled tracks.
+  scene.cylinder(0.055,1.0,material().color(0.15,0.92,0.95)).rotate(1.5707963267948966,0.0,0.0).position(x,0.0,-0.8);
+  scene.cylinder(0.055,1.0,material().color(row.r(),row.g(),row.b())).rotate(1.5707963267948966,0.0,0.0).position(x,0.0,row.x()+0.8);
+}
+scene.camera(38.0,6.0,7.0,11.0,0.0,0.0,0.6);
+scene.render_png("docs/images/shield_geometry.png",900,560);
+end _dsl_
+savedsl(draw,"build/visuals/shield_geometry-draw.dslb");
+r=system ${dsl_cli(draw)} --dsl build/visuals/shield_geometry-draw.dslb;
+assert(r.code==0,r.stdout+r.stderr);
+println("wrote docs/images/shield_geometry.png");

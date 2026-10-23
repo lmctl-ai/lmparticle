@@ -1,0 +1,31 @@
+# Half-value layers at Cs-137 energy: dense lead stops photons in less distance.
+mkdir("build/visuals");
+mkdir("docs/images");
+compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+let e = 0.662;
+let lead = rad.builtin("lead");
+let aluminum = rad.builtin("aluminum");
+let water = rad.builtin("water");
+let lead_hvl = lead.hvl(e);
+let aluminum_hvl = aluminum.hvl(e);
+let water_hvl = water.hvl(e);
+rad.assert_true(lead_hvl > 0.0 && aluminum_hvl > 0.0 && water_hvl > 0.0);
+rad.assert_true(lead_hvl < aluminum_hvl && aluminum_hvl < water_hvl);
+let rows = "material hvl_cm\nlead " + str(lead_hvl) + "\naluminum " + str(aluminum_hvl) + "\nwater " + str(water_hvl) + "\n";
+rad.save_text("build/visuals/half_value_layers.csv", rows);
+end _dsl_
+savedsl(compute, "build/visuals/half_value_layers-compute.dslb");
+r = system ${dsl_cli(compute)} --dsl build/visuals/half_value_layers-compute.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+
+draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+plot.png("docs/images/half_value_layers.png", 900, 560);
+plot.cmd("set title 'Half-value layers at 662 keV'; set xlabel 'Material'; set ylabel 'Thickness for 50% attenuation (cm)'; set grid; set key off; set boxwidth 0.6; set style fill solid 0.75; set xrange [-0.7:2.7]; set yrange [0:*]");
+plot.cmd("plot 'build/visuals/half_value_layers.csv' every ::1 using 2:xtic(1) with boxes lc rgb '#1f77b4'");
+plot.close();
+end _dsl_
+savedsl(draw, "build/visuals/half_value_layers-draw.dslb");
+r = system ${dsl_cli(draw)} --dsl build/visuals/half_value_layers-draw.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+
+println("wrote docs/images/half_value_layers.png");

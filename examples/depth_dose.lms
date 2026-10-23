@@ -1,4 +1,6 @@
 # Energy deposited layer by layer in a 30 cm water phantom by a Co-60 beam (1.173 and 1.332 MeV): a kerma depth profile.
+mkdir("build/examples");
+mkdir("docs/images");
 out = ARGV.len() > 0 ? ARGV[0] : "build/depth_dose.dslb";
 p = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 let water = rad.builtin("water");
@@ -21,3 +23,17 @@ rad.assert_close(r.total_deposited() + r.escaped_energy(), r.source_energy(), 0.
 rad.print("absorbed " + str(r.total_deposited() / r.source_energy()) + " of the beam energy");
 end _dsl_
 savedsl(p, out);
+if (ARGV.len() == 0) {
+  r = system ${dsl_cli(p)} --dsl ${out};
+  assert(r.code == 0, r.stdout + r.stderr);
+  plot = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+  plot.png("docs/images/depth_dose.png", 900, 560);
+  plot.cmd("set title 'Co-60 depth-dose profile in water'; set xlabel 'Depth (cm)'; set ylabel 'Deposited energy (MeV/photon)'; set grid; set key off");
+  plot.cmd("plot 'build/examples/depth_dose.csv' using 1:2:3 with yerrorbars pt 7 lc rgb '#1f77b4'");
+  plot.close();
+end _dsl_
+  savedsl(plot, "build/depth_dose-plot.dslb");
+  r = system ${dsl_cli(plot)} --dsl build/depth_dose-plot.dslb;
+  assert(r.code == 0, r.stdout + r.stderr);
+  println("wrote docs/images/depth_dose.png");
+}

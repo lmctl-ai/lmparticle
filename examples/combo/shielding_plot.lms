@@ -2,6 +2,7 @@
 # Two hosts in one script: lmparticle runs the Monte Carlo and writes a CSV, lmplot (gnuplot in a static binary) draws it.
 # Needs lmplot on PATH or installable; the PNG lands in build/examples/shielding_plot.png.
 mkdir("build/examples");
+mkdir("docs/images");
 sim = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 
 let pb = rad.builtin("lead");
@@ -35,3 +36,4 @@ savedsl(draw, "build/shielding_plot-draw.dslb");
 r = system ${dsl_cli(draw)} --dsl build/shielding_plot-draw.dslb;
 assert(r.code == 0);
 println("wrote build/examples/shielding_plot.png");
+assert(copy_file("build/examples/shielding_plot.png", "docs/images/shielding_plot.png"));

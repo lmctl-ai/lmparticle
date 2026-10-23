@@ -1,0 +1,47 @@
+# Self-contained: lmctl autorun the raw main URL, or run this file with lmscript.
+# Seeded radiation transport -> CSV -> lmplot PNG (and optional animation).
+mkdir("build/visuals");
+mkdir("docs/images");
+compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+# Forward plane crossings include scattered photons; they are not a survival probability.
+let lead = rad.builtin("lead");
+let src = rad.source().point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(0.662);
+let rows = "";
+for (i in range(0, 25)) {
+  let t = 0.12 * float(i+1);
+  let g = rad.geometry().slab("lead", lead, 0.0, t);
+  let result = rad.simulation(g, src).plane("exit", "z", t).seed(300+i).run(60000);
+  let u = result.plane_uncollided("exit");
+  let err = result.plane_uncollided_err("exit");
+  let expected = pow(2.718281828459045, -lead.mu(0.662)*t);
+  rad.assert_true(abs(u-expected) < 6.0*err+0.0001);
+  rad.assert_close(result.total_deposited()+result.escaped_energy(),0.662,0.000000001);
+  rows = rows + str(t)+" "+str(expected)+" "+str(u)+" "+str(err)+" "+str(result.plane_count("exit"))+"\n";
+}
+rad.save_text("build/visuals/shield_buildup.csv",rows);
+end _dsl_
+savedsl(compute, "build/visuals/shield_buildup-compute.dslb");
+r = system ${dsl_cli(compute)} --dsl build/visuals/shield_buildup-compute.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+plot.png("docs/images/shield_buildup.png", 900, 560);
+plot.cmd("set grid; set key outside top center horizontal");
+plot.cmd("set title 'Scattered photons build up behind a lead shield'; set xlabel 'Lead thickness (cm)'; set ylabel 'Forward crossings per source photon'; set logscale y; set yrange [0.01:1.2]; set xrange [0:3]");
+plot.cmd("plot 'build/visuals/shield_buildup.csv' using 1:2 with lines lw 2 title 'uncollided theory', '' using 1:3:4 with yerrorbars pt 7 title 'uncollided MC', '' using 1:5 with linespoints lw 2 pt 5 title 'all forward crossings'");
+plot.close();
+# Frames reveal the computed thickness sweep; axes remain fixed across frames.
+for (i in range(0, 25)) {
+  plot.png("build/visuals/shield-frame-"+str(1000+i)+".png", 600, 380);
+  plot.cmd("set key outside top center horizontal font ',10'");
+  plot.cmd("plot 'build/visuals/shield_buildup.csv' every ::0::"+str(i)+" using 1:2 with lines lw 2 title 'uncollided theory', '' every ::0::"+str(i)+" using 1:5 with linespoints lw 2 title 'all crossings MC'");
+  plot.close();
+}
+end _dsl_
+savedsl(draw, "build/visuals/shield_buildup-draw.dslb");
+r = system ${dsl_cli(draw)} --dsl build/visuals/shield_buildup-draw.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+if (which("ffmpeg") != null) {
+  r = system ffmpeg -v error -y -framerate 8 -start_number 1000 -i build/visuals/shield-frame-%04d.png -filter_complex "[0:v]split[a][b];[a]palettegen[p];[b][p]paletteuse" -loop 0 docs/images/shield-buildup.gif;
+  assert(r.code == 0, r.stderr);
+} else { println("Animation skipped: ffmpeg unavailable; PNG generated."); }
+println("wrote docs/images/shield_buildup.png");

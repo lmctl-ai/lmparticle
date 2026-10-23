@@ -37,6 +37,12 @@ want_version="lmparticle $(sed -n 's/^project(lmparticle VERSION \([0-9.]*\).*/\
 ok "--version prints exactly '$want_version'"
 python3 scripts/gen-schema.py >/dev/null && git diff --quiet -- schema/lmparticle.dsl.json 2>/dev/null || ! git rev-parse --git-dir >/dev/null 2>&1 || fail "schema/lmparticle.dsl.json is stale: run scripts/gen-schema.py"
 ok "schema matches the registrations in cpp/main.cpp"
+python3 scripts/check-visuals.py || fail "visual assets"
+if { command -v lmplot >/dev/null 2>&1 && command -v lmcad >/dev/null 2>&1; } || [ "${LMPARTICLE_TEST_NETWORK:-}" = 1 ]; then
+  examples/render-all.sh || fail "visual examples"
+else
+  ok "visual examples skipped (lmplot/lmcad unavailable, LMPARTICLE_TEST_NETWORK unset)"
+fi
 "$HOST" --dsl-schema --json >"$WORK/schema.json" || fail "embedded schema print"
 cmp -s "$WORK/schema.json" schema/lmparticle.dsl.json || fail "embedded schema differs from schema/lmparticle.dsl.json"
 ok "--dsl-schema --json prints byte-identical embedded schema bytes"

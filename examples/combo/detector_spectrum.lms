@@ -2,6 +2,7 @@
 # Two hosts in one script: lmparticle runs the Monte Carlo and writes a CSV, lmplot (gnuplot in a static binary) draws it.
 # Needs lmplot on PATH or installable; the PNG lands in build/examples/detector_spectrum.png.
 mkdir("build/examples");
+mkdir("docs/images");
 sim = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 
 let nai = rad.builtin("nai");
@@ -31,3 +32,4 @@ savedsl(draw, "build/detector_spectrum-draw.dslb");
 r = system ${dsl_cli(draw)} --dsl build/detector_spectrum-draw.dslb;
 assert(r.code == 0);
 println("wrote build/examples/detector_spectrum.png");
+assert(copy_file("build/examples/detector_spectrum.png", "docs/images/detector_spectrum.png"));

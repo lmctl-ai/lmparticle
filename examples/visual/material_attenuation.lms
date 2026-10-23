@@ -1,0 +1,31 @@
+# Energy-dependent linear attenuation in lead, aluminum, and water.
+mkdir("build/visuals");
+mkdir("docs/images");
+compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+let lead = rad.builtin("lead");
+let aluminum = rad.builtin("aluminum");
+let water = rad.builtin("water");
+rad.assert_true(lead.mu(0.1) > lead.mu(1.0));
+rad.assert_true(lead.mu(1.0) > 0.0 && aluminum.mu(1.0) > 0.0 && water.mu(1.0) > 0.0);
+let rows = "energy_MeV lead_cm-1 aluminum_cm-1 water_cm-1\n";
+for (i in range(0, 20)) {
+  let e = 0.05 + 0.5 * float(i);
+  rows = rows + str(e) + " " + str(lead.mu(e)) + " " + str(aluminum.mu(e)) + " " + str(water.mu(e)) + "\n";
+}
+rad.save_text("build/visuals/material_attenuation.csv", rows);
+end _dsl_
+savedsl(compute, "build/visuals/material_attenuation-compute.dslb");
+r = system ${dsl_cli(compute)} --dsl build/visuals/material_attenuation-compute.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+
+draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+plot.png("docs/images/material_attenuation.png", 900, 560);
+plot.cmd("set title 'Photon attenuation versus energy'; set xlabel 'Photon energy (MeV)'; set ylabel 'Linear attenuation (1/cm)'; set logscale y; set grid; set key outside right top");
+plot.cmd("plot 'build/visuals/material_attenuation.csv' every ::1 using 1:2 with lines lw 2 title 'lead', '' every ::1 using 1:3 with lines lw 2 title 'aluminum', '' every ::1 using 1:4 with lines lw 2 title 'water'");
+plot.close();
+end _dsl_
+savedsl(draw, "build/visuals/material_attenuation-draw.dslb");
+r = system ${dsl_cli(draw)} --dsl build/visuals/material_attenuation-draw.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+
+println("wrote docs/images/material_attenuation.png");

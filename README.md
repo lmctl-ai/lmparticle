@@ -1,13 +1,29 @@
 # lmparticle
 
-**Monte Carlo radiation transport for lmscript in one static executable: photons through slabs and
-boxes with NIST XCOM cross sections, Klein-Nishina Compton scattering, pair production, and tallies to
-CSV.** It is a scripting host, not a command-line tool: write an
-[lmscript](https://lmctl.com/tools/lmscript/skill.html) `_dsl_` block, compile it, run it with
-`lmparticle --dsl`. No data files, no Geant4, no Python, no shared libraries.
+Seeded photon transport through materials, with reproducible shielding, scattering and detector experiments.
 
-[![CI](https://github.com/lmctl-ai/lmparticle/actions/workflows/ci.yml/badge.svg)](https://github.com/lmctl-ai/lmparticle/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+| Shield geometry | Material attenuation | Interaction crossover |
+| --- | --- | --- |
+| ![Four thicknesses of lead](docs/images/shield_geometry.png) | ![Material attenuation curves](docs/images/material_attenuation.png) | ![Lead photon interactions](docs/images/interaction_crossover.png) |
+| [Finite shields; dimmer exit beams show stronger attenuation](examples/visual/shield_geometry.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/shield_geometry.lms` | [Energy changes the relative attenuation of materials](examples/visual/material_attenuation.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/material_attenuation.lms` | [Different interactions dominate at different energies](examples/visual/interaction_crossover.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/interaction_crossover.lms` |
+
+| Shield buildup | Water hardening | Layer order |
+| --- | --- | --- |
+| ![Scatter buildup](docs/images/shield_buildup.png) | ![Two photon energies through water](docs/images/water_hardening.png) | ![Layer order energy deposition](docs/images/layer_order.png) |
+| [Scattered photons add to forward crossings](examples/visual/shield_buildup.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/shield_buildup.lms` | [Water preferentially removes the softer beam](examples/visual/water_hardening.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/water_hardening.lms` | [Layer order changes where energy is absorbed](examples/visual/layer_order.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/layer_order.lms` |
+
+## Install and run
+
+Install [lmscript](https://lmctl.com/tools/lmscript/skill.html), then execute a local example or copy any gallery autorun command:
+
+```sh
+lmscript examples/visual/shield_buildup.lms
+LMPARTICLE_TEST_NETWORK=1 examples/render-all.sh
+```
+
+The `install=` bindings fetch released hosts; binaries on `PATH` take priority. Every example runs
+from an empty working directory and prints its image path under `docs/images/`.
+See the [complete gallery](docs/gallery.md) for detector spectra, half-value layers, Compton transfer and the thickness-sweep animation.
 
 ```
 # shield.lms: how much of a 662 keV (Cs-137) beam gets through 1 cm of lead without interacting?
@@ -51,18 +67,20 @@ All tallies are per source photon with the standard error of the mean. Physics, 
 Combine it with other hosts in one script: [examples/combo/](examples/combo) runs a simulation with
 lmparticle and draws it with [lmplot](https://github.com/lmctl-ai/lmplot) (two `_dsl_` blocks, two hosts).
 
-![Lead shielding](examples/renders/shielding_plot.png)
-![NaI pulse-height spectrum](examples/renders/detector_spectrum.png)
+![Lead shielding](docs/images/shielding_plot.png)
+![NaI pulse-height spectrum](docs/images/detector_spectrum.png)
 
 ## Examples
 
+Eight new [visual experiments](docs/gallery.md) complement these original simulations.
+
 | Program | Shows |
 | --- | --- |
-| [shielding.lms](examples/shielding.lms) | Cs-137 through 0.25-3.25 cm of lead: the uncollided beam follows exp(-mu x), HVL and TVL |
-| [depth_dose.lms](examples/depth_dose.lms) | layer-by-layer energy deposition of a Co-60 beam in a 30 cm water phantom |
-| [detector_response.lms](examples/detector_response.lms) | pulse-height spectrum of a NaI crystal: photopeak, Compton continuum and edge |
-| [pair_spectrum.lms](examples/pair_spectrum.lms) | what leaves lead after 6 MeV photons: pair production and the 511 keV line |
-| [combo/shielding_plot.lms](examples/combo/shielding_plot.lms), [combo/detector_spectrum.lms](examples/combo/detector_spectrum.lms) | lmparticle simulates, lmplot draws |
+| [shielding.lms](examples/shielding.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/shielding.lms` | Cs-137 through 0.25-3.25 cm of lead: the uncollided beam follows exp(-mu x), HVL and TVL |
+| [depth_dose.lms](examples/depth_dose.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/depth_dose.lms` | layer-by-layer energy deposition of a Co-60 beam in a 30 cm water phantom |
+| [detector_response.lms](examples/detector_response.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/detector_response.lms` | pulse-height spectrum of a NaI crystal: photopeak, Compton continuum and edge |
+| [pair_spectrum.lms](examples/pair_spectrum.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/pair_spectrum.lms` | what leaves lead after 6 MeV photons: pair production and the 511 keV line |
+| [combo/shielding_plot.lms](examples/combo/shielding_plot.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/combo/shielding_plot.lms`, [combo/detector_spectrum.lms](examples/combo/detector_spectrum.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/combo/detector_spectrum.lms` | lmparticle simulates, lmplot draws |
 
 `tests/` asserts known answers: XCOM published coefficients, the Klein-Nishina cross section and mean
 energy transfer, narrow-beam exp(-mu x) through layered and oblique geometries, the solid angle of a

@@ -1,0 +1,29 @@
+# Lead interaction channels: photoelectric, Compton, and pair-production coefficients.
+mkdir("build/visuals");
+mkdir("docs/images");
+compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+let lead = rad.builtin("lead");
+rad.assert_close(lead.mu_partial(1.0, "pair"), 0.0, 0.0);
+rad.assert_true(lead.mu_partial(10.0, "pair") > lead.mu_partial(10.0, "compton"));
+let rows = "energy_MeV photo_compton pair\n";
+for (i in range(0, 20)) {
+  let e = 0.1 + 0.5 * float(i);
+  rows = rows + str(e) + " " + str(lead.mu_partial(e, "photo")) + " " + str(lead.mu_partial(e, "compton")) + " " + str(lead.mu_partial(e, "pair")) + "\n";
+}
+rad.save_text("build/visuals/interaction_crossover.csv", rows);
+end _dsl_
+savedsl(compute, "build/visuals/interaction_crossover-compute.dslb");
+r = system ${dsl_cli(compute)} --dsl build/visuals/interaction_crossover-compute.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+
+draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+plot.png("docs/images/interaction_crossover.png", 900, 560);
+plot.cmd("set title 'Lead photon interaction channels'; set xlabel 'Photon energy (MeV)'; set ylabel 'Partial attenuation (1/cm)'; set logscale y; set grid; set key outside right top");
+plot.cmd("plot 'build/visuals/interaction_crossover.csv' every ::1 using 1:2 with lines lw 2 title 'photoelectric', '' every ::1 using 1:3 with lines lw 2 title 'Compton', '' every ::1 using 1:4 with lines lw 2 title 'pair production'");
+plot.close();
+end _dsl_
+savedsl(draw, "build/visuals/interaction_crossover-draw.dslb");
+r = system ${dsl_cli(draw)} --dsl build/visuals/interaction_crossover-draw.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+
+println("wrote docs/images/interaction_crossover.png");

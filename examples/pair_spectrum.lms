@@ -1,4 +1,6 @@
 # What leaves 2 cm of lead after 6 MeV photons: transmitted spectrum with the 511 keV annihilation line.
+mkdir("build/examples");
+mkdir("docs/images");
 out = ARGV.len() > 0 ? ARGV[0] : "build/pair_spectrum.dslb";
 p = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 let pb = rad.builtin("lead");
@@ -15,3 +17,17 @@ rad.assert_close(r.total_deposited() + r.escaped_energy(), 6.0, 0.000000001);
 rad.assert_true(r.plane_count("behind") > r.plane_uncollided("behind"));
 end _dsl_
 savedsl(p, out);
+if (ARGV.len() == 0) {
+  r = system ${dsl_cli(p)} --dsl ${out};
+  assert(r.code == 0, r.stdout + r.stderr);
+  plot = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+  plot.png("docs/images/pair_spectrum.png", 900, 560);
+  plot.cmd("set title '6 MeV photons after 2 cm of lead'; set xlabel 'Energy (MeV)'; set ylabel 'Transmitted fraction per bin'; set grid; set key off");
+  plot.cmd("plot 'build/examples/pair_spectrum.csv' using 1:3 with steps lw 2 lc rgb '#2ca02c'");
+  plot.close();
+end _dsl_
+  savedsl(plot, "build/pair_spectrum-plot.dslb");
+  r = system ${dsl_cli(plot)} --dsl build/pair_spectrum-plot.dslb;
+  assert(r.code == 0, r.stdout + r.stderr);
+  println("wrote docs/images/pair_spectrum.png");
+}
