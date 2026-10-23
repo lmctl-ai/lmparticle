@@ -1,0 +1,79 @@
+# What 662 keV photons actually do inside water and inside lead: the first 60 histories of each run, drawn from
+# the recorded interaction vertices (Sim.tracks). Water: long Compton random walks, photons wander out sideways.
+# Lead: short paths, one or two scatters, then photoabsorption. Self-contained: lmctl autorun the raw URL.
+mkdir("build/visuals");
+mkdir("docs/images");
+compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+let water = rad.builtin("water");
+let lead = rad.builtin("lead");
+let src = rad.source().point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(0.662);
+let gw = rad.geometry().slab("water", water, 0.0, 10.0);
+let gl = rad.geometry().slab("lead", lead, 0.0, 2.0);
+let rw = rad.simulation(gw, src).tracks(60).seed(501).run(20000);
+let rl = rad.simulation(gl, src).tracks(60).seed(502).run(20000);
+rw.save_tracks("build/visuals/tracks_water_raw.csv");
+rl.save_tracks("build/visuals/tracks_lead_raw.csv");
+# the recorded histories are ordinary histories: the run's uncollided transmission is still exp(-mu x)
+rad.assert_true(abs(rw.escaped_uncollided() - pow(2.718281828459045, -10.0 * water.mu(0.662))) < 4.0 * rw.escaped_uncollided_err());
+rad.assert_true(abs(rl.escaped_uncollided() - pow(2.718281828459045, -2.0 * lead.mu(0.662))) < 4.0 * rl.escaped_uncollided_err());
+rad.assert_true(rw.track_points() > 120 && rl.track_points() > 120);
+rad.print("water: " + str(rw.interactions("compton")) + " Compton scatters per photon, lead: " + str(rl.interactions("compton")));
+end _dsl_
+savedsl(compute, "build/visuals/photon_tracks-compute.dslb");
+r = system ${dsl_cli(compute)} --dsl build/visuals/photon_tracks-compute.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+
+# gnuplot wants one block per history (two blank lines between blocks) so `index 0:k` can reveal them one by one;
+# escaping photons get a short stub along their final direction.
+function to_blocks(src, dst, zmax) {
+  lines = read_lines(src);
+  out = "";
+  last = "-1";
+  for (line in lines) {
+    if (len(line) == 0 || substr(line, 0, 1) == "#") { continue; }
+    f = split(line, " ");
+    if (f[0] != last) { if (last != "-1") { out = out + "\n\n"; } last = f[0]; }
+    out = out + f[1] + " " + f[3] + " " + f[7] + " " + f[9] + "\n";
+    if (f[9] == "escape") {
+      out = out + str(num(f[1]) + 1.5 * num(f[4])) + " " + str(num(f[3]) + 1.5 * num(f[6])) + " " + f[7] + " stub\n";
+    }
+  }
+  write(dst, out);
+}
+to_blocks("build/visuals/tracks_water_raw.csv", "build/visuals/tracks_water.dat", 10.0);
+to_blocks("build/visuals/tracks_lead_raw.csv", "build/visuals/tracks_lead.dat", 2.0);
+
+draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+plot.png("docs/images/photon_tracks.png", 900, 500);
+plot.cmd("set multiplot layout 1,2 title '662 keV photons, 60 histories each: line colour = photon energy (MeV), dots = Compton scatters' font ',11'");
+plot.cmd("set palette defined (0 '#2d004b', 0.15 '#3b4cc0', 0.3 '#1f77b4', 0.45 '#2ca02c', 0.55 '#ff7f0e', 0.662 '#d62728'); set cbrange [0:0.662]; set cbtics 0.2");
+plot.cmd("set style fill transparent solid 0.25 noborder; set grid; set size ratio -1");
+plot.cmd("set xlabel 'x (cm)'; set ylabel 'z (cm), beam enters from below'; unset colorbox; set lmargin at screen 0.07; set rmargin at screen 0.47");
+plot.cmd("set title '10 cm of water: long Compton random walks'; set xrange [-9:9]; set yrange [-1.5:11.5]");
+plot.cmd("set object 1 rect from -9,0 to 9,10 fc rgb '#eaf4ff' fs solid 1.0 noborder behind");
+plot.cmd("plot 'build/visuals/tracks_water.dat' using 1:2:3 with lines lc palette lw 1.5 notitle, '' using (stringcolumn(4) eq 'compton' ? $1 : 1/0):2 with points pt 7 ps 0.5 lc rgb '#333333' notitle, '' using (stringcolumn(4) eq 'photo' ? $1 : 1/0):2 with points pt 7 ps 0.9 lc rgb '#d7191c' notitle");
+plot.cmd("set colorbox user origin 0.91,0.2 size 0.02,0.6; set title 'Lead, 2 cm: quick absorption (red)'; set xrange [-3:3]; set yrange [-1.2:3.3]; set lmargin at screen 0.56; set rmargin at screen 0.88; unset ylabel");
+plot.cmd("unset object 1; set object 1 rect from -3,0 to 3,2 fc rgb '#c9c9c9' fs solid 0.6 noborder behind");
+plot.cmd("plot 'build/visuals/tracks_lead.dat' using 1:2:3 with lines lc palette lw 1.5 notitle, '' using (stringcolumn(4) eq 'compton' ? $1 : 1/0):2 with points pt 7 ps 0.5 lc rgb '#333333' notitle, '' using (stringcolumn(4) eq 'photo' ? $1 : 1/0):2 with points pt 7 ps 0.9 lc rgb '#d7191c' notitle");
+plot.cmd("unset multiplot");
+plot.close();
+# animation: histories in water appear one by one (two per frame)
+for (i in range(0, 30)) {
+  plot.png("build/visuals/tracks-frame-" + str(1000 + i) + ".png", 600, 420);
+  plot.cmd("set palette defined (0 '#2d004b', 0.15 '#3b4cc0', 0.3 '#1f77b4', 0.45 '#2ca02c', 0.55 '#ff7f0e', 0.662 '#d62728'); set cbrange [0:0.662]; unset colorbox");
+  plot.cmd("set grid; set size ratio -1; set xlabel 'x (cm)'; set ylabel 'z (cm)'; set xrange [-9:9]; set yrange [-1.5:11.5]");
+  plot.cmd("set title '662 keV photons entering 10 cm of water: " + str(2 * i + 2) + " histories'");
+  plot.cmd("set object 1 rect from -9,0 to 9,10 fc rgb '#eaf4ff' fs solid 1.0 noborder behind");
+  plot.cmd("plot 'build/visuals/tracks_water.dat' index 0:" + str(2 * i + 1) + " using 1:2:3 with lines lc palette lw 1.6 notitle, '' index 0:" + str(2 * i + 1) + " using (stringcolumn(4) eq 'compton' ? $1 : 1/0):2 with points pt 7 ps 0.6 lc rgb '#333333' notitle");
+  plot.close();
+}
+end _dsl_
+savedsl(draw, "build/visuals/photon_tracks-draw.dslb");
+r = system ${dsl_cli(draw)} --dsl build/visuals/photon_tracks-draw.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+if (which("ffmpeg") != null) {
+  r = system ffmpeg -v error -y -framerate 4 -start_number 1000 -i build/visuals/tracks-frame-%04d.png -filter_complex "[0:v]split[a][b];[a]palettegen[p];[b][p]paletteuse" -loop 0 docs/images/photon-tracks.gif;
+  assert(r.code == 0, r.stderr);
+  println("wrote docs/images/photon-tracks.gif");
+} else { println("Animation skipped: ffmpeg unavailable; PNG generated."); }
+println("wrote docs/images/photon_tracks.png");

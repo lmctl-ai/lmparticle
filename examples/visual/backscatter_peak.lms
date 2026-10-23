@@ -1,0 +1,74 @@
+# Why a Cs-137 spectrum taken on a lead bench shows a bump near 200 keV: photons leaving the source away from
+# the detector scatter through ~180 degrees in the lead behind it and come back with E/(1 + 2E/mc2) = 184 keV.
+# Two runs of the same 3 x 3 inch NaI crystal: with and without a lead block behind the source. Also drawn with
+# lmdraw: the geometry and the two photon paths that make the Compton edge (477 keV) and the backscatter peak.
+mkdir("build/visuals");
+mkdir("build/rendered");
+mkdir("docs/images");
+mkdir("images");
+compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+let nai = rad.builtin("nai");
+let lead = rad.builtin("lead");
+let s = rad.source().point(0.0, 0.0, 0.0).isotropic().energy(0.662);
+let bare = rad.geometry().cylinder("crystal", nai, 0.0, 0.0, 3.81, 5.0, 12.62);
+let bench = rad.geometry().cylinder("crystal", nai, 0.0, 0.0, 3.81, 5.0, 12.62).box("lead", lead, -10.0, 10.0, -10.0, 10.0, -4.0, -1.0);
+let ra = rad.simulation(bare, s).spectrum(140, 0.7).pulse_height("crystal").seed(801).run(3000000);
+let rb = rad.simulation(bench, s).spectrum(140, 0.7).pulse_height("crystal").seed(802).run(3000000);
+ra.save_pulse_height("crystal", "build/visuals/backscatter_bare.csv");
+rb.save_pulse_height("crystal", "build/visuals/backscatter_lead.csv");
+# the backscatter window 160-210 keV fills up with the lead in place; the photopeak does not change
+let wa = ra.pulse_fraction("crystal", 0.16, 0.21);
+let wb = rb.pulse_fraction("crystal", 0.16, 0.21);
+rad.print("160-210 keV window: " + str(wa) + " bare, " + str(wb) + " with lead behind the source");
+rad.assert_true(wb > 1.2 * wa);
+rad.assert_true(abs(ra.pulse_fraction("crystal", 0.655, 0.67) - rb.pulse_fraction("crystal", 0.655, 0.67)) < 0.1 * ra.pulse_fraction("crystal", 0.655, 0.67));
+rad.print("160-210 keV window: " + str(wa) + " bare, " + str(wb) + " with lead behind the source");
+end _dsl_
+savedsl(compute, "build/visuals/backscatter_peak-compute.dslb");
+r = system ${dsl_cli(compute)} --dsl build/visuals/backscatter_peak-compute.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+plot.png("docs/images/backscatter_peak.png", 900, 560);
+plot.cmd("set title 'Cs-137 pulse-height spectrum of a 3 x 3 inch NaI crystal, source 5 cm from the face'");
+plot.cmd("set xlabel 'Deposited energy (MeV)'; set ylabel 'Counts per emitted photon per 5 keV bin'; set logscale y; set yrange [0.000002:0.05]; set xrange [0:0.7]; set grid; set key top left");
+plot.cmd("set arrow 1 from 0.2,0.0012 to 0.2,0.00055 lc rgb '#d62728' lw 2; set label 1 at 0.2,0.0016 center 'backscatter peak (184 keV at 180 degrees)' tc rgb '#d62728'");
+plot.cmd("set arrow 2 from 0.477,0.004 to 0.477,0.0012 lc rgb '#333333' lw 2; set label 2 at 0.477,0.006 center 'Compton edge 477 keV'");
+plot.cmd("set label 3 at 0.63,0.02 right 'photopeak 662 keV'");
+plot.cmd("plot 'build/visuals/backscatter_bare.csv' using (($1+$2)/2):3 with histeps lw 2 lc rgb '#1f77b4' title 'source in free space', 'build/visuals/backscatter_lead.csv' using (($1+$2)/2):3 with histeps lw 2 lc rgb '#d62728' title '3 cm lead block behind the source'");
+plot.close();
+end _dsl_
+savedsl(draw, "build/visuals/backscatter_peak-draw.dslb");
+r = system ${dsl_cli(draw)} --dsl build/visuals/backscatter_peak-draw.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+println("wrote docs/images/backscatter_peak.png");
+
+# schematic: source, crystal, lead bench, and the two scatter paths (drawn to scale, 30 px per cm)
+sketch = _dsl_ cli="lmdraw" install="github:lmctl-ai/lmdraw@latest";
+scene.canvas(900, 420, "#ffffff");
+scene.rect(150.0, 60.0, 90.0, 300.0, "#9a9a9a").set_attr("stroke", "#555555").set_attr("stroke-width", "1.5");
+scene.text(160.0, 390.0, 15.0, "lead block (3 cm)", "#333333");
+scene.rect(420.0, 96.0, 229.0, 229.0, "#e8d9a8").set_attr("stroke", "#8a7a40").set_attr("stroke-width", "1.5");
+scene.text(430.0, 350.0, 15.0, "NaI(Tl) crystal 7.62 x 7.62 cm", "#333333");
+scene.circle(270.0, 210.0, 7.0, "#d62728");
+scene.text(246.0, 190.0, 15.0, "Cs-137", "#d62728");
+scene.line(270.0, 210.0, 420.0, 210.0, "#1f77b4", 2.0);
+scene.text(300.0, 200.0, 13.0, "662 keV direct", "#1f77b4");
+scene.polyline("270 210 215 240 420 120", "#d62728", 2.0);
+scene.circle(215.0, 240.0, 4.0, "#d62728");
+scene.text(250.0, 262.0, 13.0, "scatter ~180 deg in lead:", "#d62728");
+scene.text(250.0, 280.0, 13.0, "184 keV comes back", "#d62728");
+scene.polyline("420 250 500 250 560 70", "#333333", 2.0);
+scene.circle(500.0, 250.0, 4.0, "#333333");
+scene.text(470.0, 275.0, 13.0, "scatter ~180 deg inside the crystal:", "#333333");
+scene.text(470.0, 293.0, 13.0, "electron keeps 477 keV (Compton edge),", "#333333");
+scene.text(470.0, 311.0, 13.0, "184 keV photon escapes", "#333333");
+scene.text(300.0, 40.0, 20.0, "How the backscatter peak and the Compton edge arise", "#222222");
+scene.line(700.0, 380.0, 790.0, 380.0, "#555555", 2.0);
+scene.text(700.0, 400.0, 12.0, "3 cm", "#555555");
+scene.render_png("build/rendered/backscatter_geometry.png", 900, 420, 1);
+end _dsl_
+savedsl(sketch, "build/visuals/backscatter_peak-sketch.dslb");
+r = system ${dsl_cli(sketch)} --dsl build/visuals/backscatter_peak-sketch.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+copy_file("build/rendered/backscatter_geometry.png", "docs/images/backscatter_geometry.png");
+println("wrote docs/images/backscatter_geometry.png");

@@ -28,7 +28,7 @@ if (ARGV.len() == 0) {
   assert(r.code == 0, r.stdout + r.stderr);
   plot = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
   plot.png("docs/images/depth_dose.png", 900, 560);
-  plot.cmd("set title 'Co-60 depth-dose profile in water'; set xlabel 'Depth (cm)'; set ylabel 'Deposited energy (MeV/photon)'; set grid; set key off");
+  plot.cmd("set title 'Co-60 beam in water: kerma depth profile (no electron transport: no build-up region)'; set xlabel 'Depth (cm)'; set ylabel 'Energy transferred to electrons per cm layer (MeV/photon)'; set grid; set key off");
   plot.cmd("plot 'build/examples/depth_dose.csv' using 1:2:3 with yerrorbars pt 7 lc rgb '#1f77b4'");
   plot.close();
 end _dsl_

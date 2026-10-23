@@ -22,7 +22,8 @@ if (ARGV.len() == 0) {
   assert(r.code == 0, r.stdout + r.stderr);
   plot = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
   plot.png("docs/images/pair_spectrum.png", 900, 560);
-  plot.cmd("set title '6 MeV photons after 2 cm of lead'; set xlabel 'Energy (MeV)'; set ylabel 'Transmitted fraction per bin'; set grid; set key off");
+  plot.cmd("set title '6 MeV photons after 2 cm of lead: the 511 keV annihilation line and the degraded continuum'; set xlabel 'Energy (MeV)'; set ylabel 'Transmitted fraction per bin'; set logscale y; set yrange [0.00001:1]; set grid; set key off");
+  plot.cmd("set label 1 at 0.6,0.08 left '511 keV (positron annihilation)'; set label 2 at 5.8,0.5 right 'uncollided 6 MeV'");
   plot.cmd("plot 'build/examples/pair_spectrum.csv' using 1:3 with steps lw 2 lc rgb '#2ca02c'");
   plot.close();
 end _dsl_

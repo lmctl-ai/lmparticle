@@ -1,0 +1,97 @@
+# Why radiographs lose bone contrast at higher tube voltage: a pencil beam scans across a 10 cm tissue phantom with a
+# 2 cm bone rod inside. The primary (uncollided) signal behind the phantom shows the bone as a dip; scatter crossing the
+# detector plane adds a flat fog that lowers the visible contrast. 60 keV versus 120 keV, 25 beam positions each.
+mkdir("build/visuals");
+mkdir("build/rendered");
+mkdir("docs/images");
+mkdir("images");
+compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+let tissue = rad.builtin("tissue");
+let bone = rad.builtin("bone");
+let rows = "";
+for (k in range(0, 2)) {
+  let e = 0.06;
+  if (k == 1) { e = 0.12; }
+  for (i in range(0, 25)) {
+    let y = -3.0 + 0.25 * float(i);
+    # bone first so it wins inside the tissue box; the beam runs along x, the rod along z
+    let g = rad.geometry().cylinder("bone", bone, 5.0, 0.0, 1.0, -5.0, 5.0).box("tissue", tissue, 0.0, 10.0, -5.0, 5.0, -5.0, 5.0);
+    let s = rad.source().point(-1.0, y, 0.0).beam(1.0, 0.0, 0.0).energy(e);
+    let r = rad.simulation(g, s).plane("film", "x", 10.0).seed(1200 + 100 * k + i).run(100000);
+    let chord = 0.0;
+    if (y * y < 1.0) { chord = 2.0 * pow(1.0 - y * y, 0.5); }
+    let want = pow(2.718281828459045, -tissue.mu(e) * (10.0 - chord) - bone.mu(e) * chord);
+    rad.assert_true(abs(r.plane_uncollided("film") - want) < 4.0 * r.plane_uncollided_err("film") + 0.0005);
+    rows = rows + str(e) + " " + str(y) + " " + str(r.plane_uncollided("film")) + " " + str(r.plane_count("film")) + " " + str(want) + "\n";
+  }
+  rows = rows + "\n\n";
+}
+rad.save_text("build/visuals/radiography.csv", rows);
+# contrast of 2 cm of bone against tissue, primary only: 1 - exp(-(mu_bone - mu_tissue) * 2)
+rad.print("primary bone contrast 60 keV " + str(1.0 - pow(2.718281828459045, -2.0 * (bone.mu(0.06) - tissue.mu(0.06)))) + ", 120 keV " + str(1.0 - pow(2.718281828459045, -2.0 * (bone.mu(0.12) - tissue.mu(0.12)))));
+end _dsl_
+savedsl(compute, "build/visuals/radiography_contrast-compute.dslb");
+r = system ${dsl_cli(compute)} --dsl build/visuals/radiography_contrast-compute.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+lines = read_lines("build/visuals/radiography.csv");
+blocks = [[], []];
+b = 0; blank = false;
+for (line in lines) {
+  if (len(line) == 0) { if (!blank) { b = b + 1; } blank = true; continue; }
+  blank = false;
+  if (b < 2) { blocks[b] = push(blocks[b], split(line, " ")); }
+}
+function contrast(block, col) {
+  edge = num(block[0][col]); centre = num(block[12][col]);
+  return (edge - centre) / edge;
+}
+c60p = contrast(blocks[0], 2); c120p = contrast(blocks[1], 2); c60s = contrast(blocks[0], 3); c120s = contrast(blocks[1], 3);
+println(f"bone contrast, primary: {round(c60p * 100)}% at 60 keV, {round(c120p * 100)}% at 120 keV; with scatter fog: {round(c60s * 100)}% and {round(c120s * 100)}%");
+assert(c60p > c120p && c60s < c60p && c120s < c120p, "contrast falls with energy and with scatter");
+l60 = f"60 keV: bone contrast {round(c60p * 100)}% primary, {round(c60s * 100)}% with scatter";
+l120 = f"120 keV: bone contrast {round(c120p * 100)}% primary, {round(c120s * 100)}% with scatter";
+draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+plot.png("docs/images/radiography_contrast.png", 900, 560);
+plot.cmd("set title 'A 2 cm bone rod in 10 cm of tissue: signal across the beam (solid: primary, dashed: with scatter)'");
+plot.cmd("set xlabel 'Beam position across the phantom (cm)'; set ylabel 'Photons reaching the detector plane per source photon'; set grid; set key below; set xrange [-3:3]; set yrange [0:*]");
+plot.cmd("set object 1 rect from -1,graph 0 to 1,graph 1 fc rgb '#f1e7c8' fs solid noborder behind; set label 1 at 0,graph 0.95 center 'bone' tc rgb '#8a7a40'");
+plot.cmd("set label 2 at graph 0.02,graph 0.79 left '" + ${l60} + "' tc rgb '#1f77b4'");
+plot.cmd("set label 3 at graph 0.02,graph 0.73 left '" + ${l120} + "' tc rgb '#d62728'");
+plot.cmd("plot 'build/visuals/radiography.csv' index 0 using 2:3 with linespoints pt 7 lw 2 lc rgb '#1f77b4' title '60 keV primary', '' index 0 using 2:4 with lines dt 2 lw 2 lc rgb '#1f77b4' title '60 keV with scatter', '' index 1 using 2:3 with linespoints pt 5 lw 2 lc rgb '#d62728' title '120 keV primary', '' index 1 using 2:4 with lines dt 2 lw 2 lc rgb '#d62728' title '120 keV with scatter'");
+plot.close();
+end _dsl_
+savedsl(draw, "build/visuals/radiography_contrast-draw.dslb");
+r = system ${dsl_cli(draw)} --dsl build/visuals/radiography_contrast-draw.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+println("wrote docs/images/radiography_contrast.png");
+
+# layout drawn to scale with lmdraw (top view, 40 px per cm): phantom, bone rod, three of the 25 beam positions, detector plane
+sketch = _dsl_ cli="lmdraw" install="github:lmctl-ai/lmdraw@latest";
+scene.canvas(900, 420, "#ffffff");
+scene.text(250.0, 40.0, 20.0, "Radiography phantom, top view (beam along x, bone rod along z)", "#222222");
+scene.rect(300.0, 70.0, 400.0, 300.0, "#f7d9c4").set_attr("stroke", "#b07a5a").set_attr("stroke-width", "1.5");
+scene.text(310.0, 92.0, 14.0, "soft tissue 10 x 10 cm", "#7a4a2a");
+scene.circle(500.0, 220.0, 40.0, "#e8d9a8").set_attr("stroke", "#8a7a40").set_attr("stroke-width", "1.5");
+scene.text(470.0, 226.0, 14.0, "bone", "#5a4a10");
+scene.text(452.0, 290.0, 13.0, "r = 1 cm", "#5a4a10");
+scene.arrow(150.0, 100.0, 700.0, 100.0, "#1f77b4", 2.0);
+scene.arrow(150.0, 220.0, 700.0, 220.0, "#1f77b4", 2.0);
+scene.arrow(150.0, 340.0, 700.0, 340.0, "#1f77b4", 2.0);
+scene.text(60.0, 105.0, 13.0, "y = -3 cm", "#1f77b4");
+scene.text(60.0, 225.0, 13.0, "y = 0", "#1f77b4");
+scene.text(60.0, 345.0, 13.0, "y = +3 cm", "#1f77b4");
+scene.text(60.0, 190.0, 13.0, "25 pencil-beam", "#1f77b4");
+scene.text(60.0, 206.0, 13.0, "positions", "#1f77b4");
+scene.line(720.0, 60.0, 720.0, 380.0, "#333333", 4.0);
+scene.text(735.0, 225.0, 14.0, "detector plane x = 10 cm", "#333333");
+scene.text(735.0, 243.0, 12.0, "(uncollided = primary image,", "#555555");
+scene.text(735.0, 259.0, 12.0, "all crossings = with scatter)", "#555555");
+scene.line(300.0, 395.0, 700.0, 395.0, "#555555", 1.5);
+scene.text(480.0, 412.0, 12.0, "10 cm", "#555555");
+scene.render_png("build/rendered/radiography_layout.png", 900, 420, 1);
+end _dsl_
+savedsl(sketch, "build/visuals/radiography_contrast-sketch.dslb");
+r = system ${dsl_cli(sketch)} --dsl build/visuals/radiography_contrast-sketch.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+copy_file("build/rendered/radiography_layout.png", "docs/images/radiography_layout.png");
+println("wrote docs/images/radiography_layout.png");

@@ -1,29 +1,66 @@
 # lmparticle
 
-Seeded photon transport through materials, with reproducible shielding, scattering and detector experiments.
+Seeded Monte Carlo photon transport with NIST XCOM cross sections: shielding, detectors, imaging and dosimetry
+questions answered by a 2.5 MB executable that an `lmctl autorun` command fetches for you. Every picture below is
+made by the example it links to; run the command under it from any empty directory.
 
-| Shield geometry | Material attenuation | Interaction crossover |
-| --- | --- | --- |
-| ![Four thicknesses of lead](docs/images/shield_geometry.png) | ![Material attenuation curves](docs/images/material_attenuation.png) | ![Lead photon interactions](docs/images/interaction_crossover.png) |
-| [Finite shields; dimmer exit beams show stronger attenuation](examples/visual/shield_geometry.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/refs/heads/main/examples/visual/shield_geometry.lms` | [Energy changes the relative attenuation of materials](examples/visual/material_attenuation.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/refs/heads/main/examples/visual/material_attenuation.lms` | [Different interactions dominate at different energies](examples/visual/interaction_crossover.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/refs/heads/main/examples/visual/interaction_crossover.lms` |
+### Shielding design
 
-| Shield buildup | Water hardening | Layer order |
+| Tenth-value layers | Source in a lead pot | Streaming through a slit |
 | --- | --- | --- |
-| ![Scatter buildup](docs/images/shield_buildup.png) | ![Two photon energies through water](docs/images/water_hardening.png) | ![Layer order energy deposition](docs/images/layer_order.png) |
-| [Scattered photons add to forward crossings](examples/visual/shield_buildup.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/refs/heads/main/examples/visual/shield_buildup.lms` | [Water preferentially removes the softer beam](examples/visual/water_hardening.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/refs/heads/main/examples/visual/water_hardening.lms` | [Layer order changes where energy is absorbed](examples/visual/layer_order.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/refs/heads/main/examples/visual/layer_order.lms` |
+| ![Tenth-value layers](docs/images/tenth_value_layers.png) | ![Kerma versus distance](docs/images/dose_rate_distance.png) | ![Streaming through a slit](docs/images/streaming_gap.png) |
+| [Narrow-beam tables understate the wall: buildup adds a third (lead) to two thirds (concrete)](examples/visual/tenth_value_layers.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/tenth_value_layers.lms` | [Inverse square times exp(-mu t), plus what scatters out of the lead and off the air](examples/visual/dose_rate_distance.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/dose_rate_distance.lms` | [A 4 mm slit in 4 cm of lead passes 50 times the kerma of the wall next to it](examples/visual/streaming_gap.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/streaming_gap.lms` |
+
+| Scatter buildup, 25 thicknesses | Slit geometry (lmdraw) | Layer order |
+| --- | --- | --- |
+| ![Scatter buildup](docs/images/shield-buildup.gif) | ![Slit layout](docs/images/streaming_layout.png) | ![Layer order energy deposition](docs/images/layer_order.png) |
+| [Uncollided photons follow exp(-mu x); all forward crossings do not](examples/visual/shield_buildup.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/shield_buildup.lms` | [The wall, the slit, the broad beam and the 25 detector cells, to scale](examples/visual/streaming_gap.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/streaming_gap.lms` | [Lead-then-aluminium and aluminium-then-lead transmit the same but absorb differently](examples/visual/layer_order.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/layer_order.lms` |
+
+### Detectors and spectra
+
+| NaI(Tl) efficiency | Backscatter peak | How the peaks arise (lmdraw) |
+| --- | --- | --- |
+| ![NaI efficiency](docs/images/nai_efficiency.png) | ![Backscatter peak](docs/images/backscatter_peak.png) | ![Backscatter geometry](docs/images/backscatter_geometry.png) |
+| [3 x 3 inch crystal at 10 cm: total and photopeak efficiency against solid angle x (1 - exp(-mu L))](examples/visual/nai_efficiency.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/nai_efficiency.lms` | [A lead block behind a Cs-137 source adds the 184 keV bump; the Compton edge stays at 477 keV](examples/visual/backscatter_peak.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/backscatter_peak.lms` | [The two 180-degree scatters that make the backscatter peak and the Compton edge](examples/visual/backscatter_peak.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/backscatter_peak.lms` |
+
+### Imaging and dosimetry
+
+| Radiographic contrast | Phantom layout (lmdraw) | X-ray tube filtration |
+| --- | --- | --- |
+| ![Radiography contrast](docs/images/radiography_contrast.png) | ![Radiography layout](docs/images/radiography_layout.png) | ![Tube filtration](docs/images/tube_filtration.png) |
+| [2 cm of bone: 55% contrast at 60 keV, 27% at 120 keV, and scatter fog halves both](examples/visual/radiography_contrast.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/radiography_contrast.lms` | [Tissue block, bone rod, 25 pencil-beam positions and the detector plane](examples/visual/radiography_contrast.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/radiography_contrast.lms` | [2.5 mm Al and 0.2 mm Cu remove the soft photons: mean energy and HVL rise, intensity falls](examples/visual/tube_filtration.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/tube_filtration.lms` |
+
+### Physics of photon interactions
+
+| Photon tracks | Which interaction dominates | Buildup factor |
+| --- | --- | --- |
+| ![Photon tracks](docs/images/photon_tracks.png) | ![Dominance map](docs/images/dominance_map.png) | ![Buildup factor](docs/images/buildup_factor.png) |
+| [60 recorded histories in water and in lead, coloured by energy](examples/visual/photon_tracks.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/photon_tracks.lms` | [Photoelectric, Compton and pair-production crossover energies for all 19 elements of the table](examples/visual/dominance_map.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/dominance_map.lms` | [Point source in water, iron, lead: 2.09 and 3.59 at 1 and 2 mfp against the published 2.08 and 3.62](examples/visual/buildup_factor.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/buildup_factor.lms` |
+
+| Tracks accumulating | Monte Carlo convergence | Water hardening |
+| --- | --- | --- |
+| ![Tracks animation](docs/images/photon-tracks.gif) | ![Convergence](docs/images/convergence.png) | ![Water hardening](docs/images/water_hardening.png) |
+| [662 keV photons entering water, two histories per frame](examples/visual/photon_tracks.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/photon_tracks.lms` | [Error falls as 1/sqrt(N); implicit capture needs fewer histories for the same error](examples/visual/convergence.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/convergence.lms` | [Water removes the 80 keV beam five times faster than the 662 keV beam](examples/visual/water_hardening.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/water_hardening.lms` |
+
+The [complete gallery](docs/gallery.md) has all 25 examples with their pictures and commands, including
+material attenuation curves, half-value layers, Compton energy transfer, the NaI pulse-height spectrum, the
+pair-production spectrum of 6 MeV photons in lead, the Co-60 depth profile and the finite-shield render (lmcad).
 
 ## Install and run
 
-Install [lmscript](https://lmctl.com/tools/lmscript/skill.html), then execute a local example or copy any gallery autorun command:
+Install [lmctl](https://lmctl.com/tools/lmscript/skill.html) (it brings `lmscript` and `lmctl autorun`). Then copy
+any command from the gallery, or run a local file:
 
 ```sh
-lmscript examples/visual/shield_buildup.lms
-LMPARTICLE_TEST_NETWORK=1 examples/render-all.sh
+lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/backscatter_peak.lms
+lmscript examples/visual/backscatter_peak.lms           # from a checkout
+LMPARTICLE_TEST_NETWORK=1 examples/render-all.sh        # regenerate every docs/images file
 ```
 
-The `install=` bindings fetch released hosts; binaries on `PATH` take priority. Every example runs
-from an empty working directory and prints its image path under `docs/images/`.
-See the [complete gallery](docs/gallery.md) for detector spectra, half-value layers, Compton transfer and the thickness-sweep animation.
+The `install=` bindings fetch released hosts (lmparticle, [lmplot](https://github.com/lmctl-ai/lmplot),
+[lmdraw](https://github.com/lmctl-ai/lmdraw), [lmcad](https://github.com/lmctl-ai/lmcad)); binaries on `PATH` take
+priority. Every example runs from an empty working directory and writes its images under `docs/images/` there.
+GitHub rate-limits anonymous release lookups (60 per hour): export a `GITHUB_TOKEN` if `install` reports HTTP 403.
 
 ```
 # shield.lms: how much of a 662 keV (Cs-137) beam gets through 1 cm of lead without interacting?
@@ -70,30 +107,34 @@ xoshiro256** generator: the same program gives the same numbers, bit for bit, on
 
 All tallies are per source photon with the standard error of the mean. Physics, models and their limits:
 [durable-memory/03-physics-and-limits.md](durable-memory/03-physics-and-limits.md); schema:
-[durable-memory/04-schema-v0.md](durable-memory/04-schema-v0.md).
+[durable-memory/04-schema-v0.md](durable-memory/04-schema-v0.md). The host stops with exit 3 instead of
+exhausting memory: `LMPARTICLE_MAX_MEMORY_MB` (default 4096) is the budget.
 
-Combine it with other hosts in one script: [examples/combo/](examples/combo) runs a simulation with
-lmparticle and draws it with [lmplot](https://github.com/lmctl-ai/lmplot) (two `_dsl_` blocks, two hosts).
-
-![Lead shielding](docs/images/shielding_plot.png)
-![NaI pulse-height spectrum](docs/images/detector_spectrum.png)
+Combine it with other hosts in one script: several `_dsl_` blocks, one per host. The gallery examples simulate
+with lmparticle, then draw with lmplot (curves, spectra, multi-panel figures, GIF frames), lmdraw (layouts and
+annotated diagrams) or lmcad (3D renders); lmscript glues them, reading the CSV files back where a figure needs
+derived numbers.
 
 ## Examples
 
-Eight new [visual experiments](docs/gallery.md) complement these original simulations.
+All 25 examples are self-contained (they bind released hosts, execute their own bytecode and write images under
+the current directory) and assert a known answer before drawing. The [gallery](docs/gallery.md) lists each one with
+its picture and autorun command. The four original programs under `examples/` also take an output argument for
+compile-only use in `test.sh`:
 
 | Program | Shows |
 | --- | --- |
-| [shielding.lms](examples/shielding.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/refs/heads/main/examples/shielding.lms` | Cs-137 through 0.25-3.25 cm of lead: the uncollided beam follows exp(-mu x), HVL and TVL |
-| [depth_dose.lms](examples/depth_dose.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/refs/heads/main/examples/depth_dose.lms` | layer-by-layer energy deposition of a Co-60 beam in a 30 cm water phantom |
-| [detector_response.lms](examples/detector_response.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/refs/heads/main/examples/detector_response.lms` | pulse-height spectrum of a NaI crystal: photopeak, Compton continuum and edge |
-| [pair_spectrum.lms](examples/pair_spectrum.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/refs/heads/main/examples/pair_spectrum.lms` | what leaves lead after 6 MeV photons: pair production and the 511 keV line |
-| [combo/shielding_plot.lms](examples/combo/shielding_plot.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/refs/heads/main/examples/combo/shielding_plot.lms`, [combo/detector_spectrum.lms](examples/combo/detector_spectrum.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/refs/heads/main/examples/combo/detector_spectrum.lms` | lmparticle simulates, lmplot draws |
+| [shielding.lms](examples/shielding.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/shielding.lms` | Cs-137 through 0.25-3.25 cm of lead: the uncollided beam follows exp(-mu x), HVL and TVL |
+| [depth_dose.lms](examples/depth_dose.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/depth_dose.lms` | layer-by-layer kerma of a Co-60 beam in a 30 cm water phantom |
+| [detector_response.lms](examples/detector_response.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/detector_response.lms` | pulse-height spectrum of a NaI crystal: photopeak, Compton continuum and edge |
+| [pair_spectrum.lms](examples/pair_spectrum.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/pair_spectrum.lms` | what leaves lead after 6 MeV photons: pair production and the 511 keV line |
+| [combo/shielding_plot.lms](examples/combo/shielding_plot.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/combo/shielding_plot.lms`, [combo/detector_spectrum.lms](examples/combo/detector_spectrum.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/combo/detector_spectrum.lms` | lmparticle simulates, lmplot draws |
 
 `tests/` asserts known answers: XCOM published coefficients, the Klein-Nishina cross section and mean
-energy transfer, narrow-beam exp(-mu x) through layered and oblique geometries, the solid angle of a
-detector seen from an isotropic source, region priority, energy conservation to 1e-9, the pair threshold
-and annihilation photons, buildup trends, the Compton edge, and bitwise reproducibility.
+energy transfer, narrow-beam exp(-mu x) through layered, oblique, spherical and cylindrical geometries, the
+solid angle of a detector seen from an isotropic source and from a cone, region priority, energy conservation to
+1e-9, the pair threshold and annihilation photons, buildup trends, the Compton edge, implicit capture against
+analog transport, and bitwise reproducibility.
 
 ## Build
 
@@ -109,17 +150,13 @@ statically. `lmparticle --notices` prints the XCOM citation and the licenses.
 
 ## Scope
 
-Photons only: electrons and positrons deposit their energy where they are produced (a kerma
-approximation; no bremsstrahlung, no fluorescence, no Doppler broadening), and positrons annihilate at
-rest. That is accurate for attenuation, shielding, buildup and detector counting questions with photons
-above a few tens of keV in low and medium Z; it is not a substitute for Geant4 where charged-particle
-ranges matter. See [durable-memory/03-physics-and-limits.md](durable-memory/03-physics-and-limits.md).
-
-## Resource limits
-
-A program may use at most 4096 MiB in total (tallies, spectra, results, every object the host keeps);
-beyond that it stops with a run error (exit 3) naming the limit, instead of exhausting the machine.
-Set `LMPARTICLE_MAX_MEMORY_MB` to change it, e.g. `LMPARTICLE_MAX_MEMORY_MB=16384 lmscript big.lms`.
+Photons only: electrons and positrons deposit their energy where they are produced (collision kerma; no
+bremsstrahlung, no fluorescence, no Doppler broadening), and positrons annihilate at rest. That is accurate for
+attenuation, shielding, buildup and detector counting questions with photons above a few tens of keV in low and
+medium Z; it is not a substitute for Geant4 where charged-particle ranges matter (absorbed dose in thin layers,
+build-up regions, electron escape from small detectors). Geometry is axis-aligned boxes, spheres and z-axis
+cylinders; the source is a point or a disc, isotropic, a pencil beam or a cone. See
+[durable-memory/03-physics-and-limits.md](durable-memory/03-physics-and-limits.md).
 
 ## License
 

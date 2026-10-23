@@ -97,8 +97,8 @@ def check(root: Path) -> list[str]:
         errors.append("docs/gallery.md is missing")
     preamble = readme.read_text(encoding="utf-8").split("\n## ", 1)[0]
     count = len(images(preamble))
-    if not 3 <= count <= 6:
-        errors.append(f"README gallery must contain 3-6 images before first ## heading (found {count})")
+    if not 3 <= count <= 20:
+        errors.append(f"README gallery must contain 3-20 images before first ## heading (found {count})")
     sources = re.findall(r"\((examples/[^)\s]+\.lms)\)", preamble)
     autoruns = re.findall(r"lmctl autorun\s+\S+", preamble)
     if len(sources) < count:

@@ -27,6 +27,22 @@ uncollided transmission, not sampled tracks. The buildup GIF reveals the 25 comp
 points with fixed axes; ffmpeg is an optional external executable, with an explicit skip when
 absent. No new linked libraries or simulation behavior changes were introduced.
 
+## Second set: 11 use cases under `examples/visual/` (25 examples, 30 images in all)
+
+tenth_value_layers (NCRP 49 TVLs, broad vs narrow beam), dose_rate_distance (lead pot, inverse square),
+streaming_gap (slit, lmdraw layout), nai_efficiency (3x3 inch crystal vs solid angle x (1 - exp(-mu L))),
+backscatter_peak (184 keV bump, lmdraw diagram), radiography_contrast (bone rod, scatter fog, lmdraw layout),
+tube_filtration (Kramers 100 kVp, Al/Cu filters, HVL), photon_tracks (60 histories, GIF accumulating),
+dominance_map (19 elements, crossover energies), buildup_factor (ANS-6.4.3 water 2.08/3.62 at 1/2 mfp),
+convergence (1/sqrt(N), implicit capture 1.3x fewer histories). The README gallery is grouped by theme
+(shielding design, detectors and spectra, imaging and dosimetry, physics of photon interactions).
+
+Lessons: the released lmdraw (0.2.3) writes PNGs only under `build/rendered/` (the dev build is laxer), so
+every lmdraw block renders there and `copy_file`s to `docs/images/`; `render-all.sh` does not put lmdraw on
+PATH, so test runs use the release. Keys with long entries overflow a half-width multiplot panel: shorten the
+titles or `set key below`. Track CSV columns are 0-based (event is column 9). The escape event is recorded at
+the surface the photon left through, never at infinity (fixed in `transport.cpp`, tested in `tests/core.cpp`).
+
 `test.sh` validates README and gallery references, companion coverage, PNG/GIF magic and size,
 and regenerates images when sibling hosts are available. Missing siblings print an explicit skip.
 Seeded results repeat on one platform; fonts/rendered bytes are not promised identical across OSes.

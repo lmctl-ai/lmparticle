@@ -1,0 +1,50 @@
+# A 3 x 3 inch NaI(Tl) crystal 10 cm from a point source: how many photons does it register, and how many end up
+# in the full-energy peak? The geometric factor is the exact solid angle of the front face, the intrinsic
+# efficiency of the central ray is 1 - exp(-mu L); the Monte Carlo includes edge paths and partial deposits.
+# Peak-to-total falls with energy as Compton scatters escape the crystal.
+mkdir("build/visuals");
+mkdir("docs/images");
+compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+let nai = rad.builtin("nai");
+let rows = "";
+let radius = 3.81;
+let length = 7.62;
+let dist = 10.0;
+let geo = 0.5 * (1.0 - dist / pow(dist * dist + radius * radius, 0.5));   # solid angle fraction of the front face
+for (i in range(0, 9)) {
+  let e = 0.1;
+  if (i == 1) { e = 0.2; } if (i == 2) { e = 0.3; } if (i == 3) { e = 0.5; } if (i == 4) { e = 0.662; }
+  if (i == 5) { e = 1.0; } if (i == 6) { e = 1.332; } if (i == 7) { e = 2.0; } if (i == 8) { e = 3.0; }
+  let g = rad.geometry().cylinder("crystal", nai, 0.0, 0.0, radius, dist, dist + length);
+  # a cone just wide enough to cover the crystal face: photons outside it would miss anyway
+  let s = rad.source().point(0.0, 0.0, 0.0).cone(0.0, 0.0, 1.0, 21.5).energy(e);
+  let cone = 0.5 * (1.0 - 0.930417568);   # fraction of 4 pi inside the 21.5 degree cone
+  let r = rad.simulation(g, s).spectrum(400, e * 1.01).pulse_height("crystal").seed(600 + i).run(400000);
+  let total = r.pulse_fraction("crystal", 0.002, e * 1.01) * cone;       # any deposit above 2 keV, per 4 pi photon
+  let peak = r.pulse_fraction("crystal", e * 0.995, e * 1.01) * cone;    # full-energy deposits
+  let intrinsic = 1.0 - pow(2.718281828459045, -nai.mu(e) * length);
+  rad.assert_true(total > 0.6 * geo * intrinsic && total < 1.3 * geo * intrinsic);
+  rad.assert_true(peak <= total);
+  rows = rows + str(e) + " " + str(total) + " " + str(peak) + " " + str(geo * intrinsic) + " " + str(peak / total) + "\n";
+}
+rad.save_text("build/visuals/nai_efficiency.csv", rows);
+rad.print("solid-angle fraction of the face " + str(geo));
+end _dsl_
+savedsl(compute, "build/visuals/nai_efficiency-compute.dslb");
+r = system ${dsl_cli(compute)} --dsl build/visuals/nai_efficiency-compute.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+plot.png("docs/images/nai_efficiency.png", 900, 560);
+plot.cmd("set multiplot layout 1,2 title '3 x 3 inch NaI(Tl), point source 10 cm from the face'");
+plot.cmd("set logscale x; set grid; set xlabel 'Photon energy (MeV)'; set xrange [0.08:4]; set key top right");
+plot.cmd("set title 'Absolute efficiency (counts per emitted photon)'; set ylabel 'Efficiency'; set yrange [0:0.045]");
+plot.cmd("plot 'build/visuals/nai_efficiency.csv' using 1:4 with lines lw 2 dt 2 lc rgb '#555555' title 'solid angle x (1 - exp(-mu L))', '' using 1:2 with linespoints pt 7 lw 2 lc rgb '#1f77b4' title 'total (Monte Carlo)', '' using 1:3 with linespoints pt 5 lw 2 lc rgb '#d62728' title 'full-energy peak (Monte Carlo)'");
+plot.cmd("set title 'Peak-to-total ratio'; set ylabel 'Peak / total'; set yrange [0:1.05]; set key bottom left");
+plot.cmd("plot 'build/visuals/nai_efficiency.csv' using 1:5 with linespoints pt 7 lw 2 lc rgb '#2ca02c' title 'Monte Carlo (no electron escape)'");
+plot.cmd("unset multiplot");
+plot.close();
+end _dsl_
+savedsl(draw, "build/visuals/nai_efficiency-draw.dslb");
+r = system ${dsl_cli(draw)} --dsl build/visuals/nai_efficiency-draw.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+println("wrote docs/images/nai_efficiency.png");

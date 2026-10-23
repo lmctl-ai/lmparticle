@@ -1,0 +1,75 @@
+# How many histories does a shielding answer need? The transmitted kerma behind 5 half-value layers of lead
+# (3.1% narrow-beam transmission of Cs-137) is estimated with 1e3 ... 1e6 histories, analog and with implicit
+# capture. The reported standard error falls as 1/sqrt(N); implicit capture (photoabsorption as weight loss plus
+# Russian roulette) gives the same mean with a smaller error for the same N, and the scatter of repeated runs
+# with different seeds matches the reported error.
+mkdir("build/visuals");
+mkdir("docs/images");
+compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+let lead = rad.builtin("lead");
+let tissue = rad.builtin("tissue");
+let t = 5.0 * lead.hvl(0.662);
+let g = rad.geometry().slab("wall", lead, 0.0, t).slab("det", tissue, t, t + 1.0);
+let s = rad.source().point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(0.662);
+let rows = "";
+let spread = "";
+for (mode in range(0, 2)) {
+  for (k in range(0, 7)) {
+    let n = 1000;
+    for (j in range(0, k)) { n = n * 3; }        # 1000, 3000, 9000, ... 729000
+    # five seeds per size: the spread of the five means is an independent check of the reported error
+    let sum = 0.0;
+    let sum2 = 0.0;
+    let err = 0.0;
+    for (seed in range(0, 5)) {
+      let sim = rad.simulation(g, s).seed(2000 + 10 * k + seed);
+      if (mode == 1) { sim.implicit_capture(0.05); }
+      let r = sim.run(n);
+      let v = r.deposited("det");
+      sum = sum + v;
+      sum2 = sum2 + v * v;
+      err = err + r.deposited_err("det") / 5.0;
+    }
+    let mean = sum / 5.0;
+    let sd = pow(abs(sum2 / 5.0 - mean * mean) * 1.25, 0.5);   # sample standard deviation of the five means
+    rows = rows + str(mode) + " " + str(n) + " " + str(mean) + " " + str(err) + " " + str(sd) + "\n";
+  }
+  rows = rows + "\n\n";
+}
+rad.save_text("build/visuals/convergence.csv", rows);
+end _dsl_
+savedsl(compute, "build/visuals/convergence-compute.dslb");
+r = system ${dsl_cli(compute)} --dsl build/visuals/convergence-compute.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+vals = [[], []];
+b = 0; blank = false;
+for (line in read_lines("build/visuals/convergence.csv")) {
+  if (len(line) == 0) { if (!blank) { b = b + 1; } blank = true; continue; }
+  blank = false;
+  if (b < 2) { vals[b] = push(vals[b], split(line, " ")); }
+}
+# the error falls as 1/sqrt(N): from 1000 to 729000 histories it should drop by about 27
+ratio = num(vals[0][0][3]) / num(vals[0][6][3]);
+println(f"analog error ratio N=1000 / N=729000: {ratio} (1/sqrt(N) predicts 27)");
+assert(ratio > 18.0 && ratio < 40.0, "1/sqrt(N) scaling");
+# same answer both ways at the largest N, implicit capture with the smaller error
+a = num(vals[0][6][2]); ia = num(vals[1][6][2]); ea = num(vals[0][6][3]); ei = num(vals[1][6][3]);
+println(f"kerma behind 5 HVL of lead: analog {a} +- {ea}, implicit capture {ia} +- {ei} MeV/photon");
+assert(abs(a - ia) < 4.0 * (ea + ei), "both estimators agree");
+assert(ei < ea, "implicit capture reduces the error");
+gain = round((ea / ei) * (ea / ei) * 10) / 10;
+draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+plot.png("docs/images/convergence.png", 900, 560);
+plot.cmd("set multiplot layout 1,2 title 'Kerma behind 5 half-value layers of lead (Cs-137): Monte Carlo convergence' font ',12'");
+plot.cmd("set logscale xy; set grid; set xlabel 'Histories N'; set key bottom left; set format y '%.0e'; set xrange [600:1500000]");
+plot.cmd("set title 'Reported error (lines) and spread of 5 seeds (points)'; set ylabel 'Error of the kerma estimate (MeV/photon)'");
+plot.cmd("plot 'build/visuals/convergence.csv' index 0 using 2:4 with lines lw 2 lc rgb '#1f77b4' title 'analog: error', '' index 0 using 2:5 with points pt 6 ps 1.3 lc rgb '#1f77b4' title 'analog: 5 seeds', '' index 1 using 2:4 with lines lw 2 lc rgb '#d62728' title 'implicit: error', '' index 1 using 2:5 with points pt 4 ps 1.3 lc rgb '#d62728' title 'implicit: 5 seeds', '' index 0 using 2:(0.02/sqrt($2)) with lines dt 2 lc rgb '#555555' title '1/sqrt(N)'");
+plot.cmd("unset logscale y; set format y '%.1e'; set title 'Estimates with error bars'; set ylabel 'Kerma per photon (MeV/photon)'; set yrange [0:0.0026]; set key top right; set label 5 at graph 0.97, graph 0.08 right 'implicit capture: " + str(${gain}) + "x fewer histories for the same error' font ',10'");
+plot.cmd("plot 'build/visuals/convergence.csv' index 0 using ($2*0.9):3:4 with yerrorbars pt 7 lc rgb '#1f77b4' title 'analog', '' index 1 using ($2*1.1):3:4 with yerrorbars pt 5 lc rgb '#d62728' title 'implicit capture'");
+plot.cmd("unset multiplot");
+plot.close();
+end _dsl_
+savedsl(draw, "build/visuals/convergence-draw.dslb");
+r = system ${dsl_cli(draw)} --dsl build/visuals/convergence-draw.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+println("wrote docs/images/convergence.png");

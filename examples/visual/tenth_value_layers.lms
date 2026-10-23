@@ -1,0 +1,109 @@
+# How thick must a wall be to cut a Cs-137 or Co-60 beam to a tenth? The tabulated narrow-beam answer ln(10)/mu
+# is too thin: in a real wall scattered photons add to the dose behind it. The Monte Carlo scores the kerma in a
+# 1 cm tissue layer behind an infinite slab (broad-beam geometry by symmetry) relative to no wall, so its
+# tenth-value layer has the full buildup of an unlimited field. NCRP Report 49 broad-beam TVLs, measured with finite
+# fields, lie between the two: lead 2.1 / 4.0 cm, concrete 17.5 / 20.6 cm (Cs-137 / Co-60).
+mkdir("build/visuals");
+mkdir("docs/images");
+compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+let lead = rad.builtin("lead");
+let conc = rad.builtin("concrete");
+let cs = rad.source().point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(0.662);
+let co = rad.source().point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).line(1.173, 1.0).line(1.332, 1.0);
+let tissue = rad.builtin("tissue");
+let rows = "";
+for (m in range(0, 2)) {
+  for (k in range(0, 2)) {
+    # the detector alone: kerma per photon with no wall, the reference for the transmission
+    let g0 = rad.geometry().slab("det", tissue, 0.0, 1.0);
+    let s0 = rad.simulation(g0, cs).seed(900 + 10 * m + k);
+    if (k == 1) { s0 = rad.simulation(g0, co).seed(900 + 10 * m + k); }
+    let k0 = s0.run(200000).deposited("det");
+    for (i in range(0, 10)) {
+      let t = 0.6 * float(i + 1);
+      let e = 0.662;
+      if (k == 1) { e = 1.25; }
+      let mu = lead.mu(e);
+      if (m == 1) { t = 3.0 * float(i + 1); mu = conc.mu(e); }
+      let g = rad.geometry();
+      if (m == 0) { g.slab("wall", lead, 0.0, t); } else { g.slab("wall", conc, 0.0, t); }
+      g.slab("det", tissue, t, t + 1.0);
+      let sim = rad.simulation(g, cs).implicit_capture(0.05).seed(1000 + 100 * m + 10 * k + i);
+      if (k == 1) { sim = rad.simulation(g, co).implicit_capture(0.05).seed(1000 + 100 * m + 10 * k + i); }
+      let r = sim.run(200000);
+      let narrow = pow(2.718281828459045, -mu * t);
+      let broad = r.deposited("det") / k0;
+      rad.assert_true(broad > 0.8 * narrow);
+      rows = rows + str(m) + " " + str(k) + " " + str(t) + " " + str(narrow) + " " + str(broad) + " " + str(r.deposited_err("det") / k0) + "\n";
+    }
+    rows = rows + "\n\n";
+  }
+}
+rad.save_text("build/visuals/tvl.csv", rows);
+end _dsl_
+savedsl(compute, "build/visuals/tenth_value_layers-compute.dslb");
+r = system ${dsl_cli(compute)} --dsl build/visuals/tenth_value_layers-compute.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+
+# tenth-value layer: where the transmission curve crosses 0.1 (log-linear interpolation between sweep points)
+function tvl_of(block, col) {
+  lines = read_lines("build/visuals/tvl.csv");
+  rows = [];
+  b = 0;
+  blank = false;
+  for (line in lines) {
+    if (len(line) == 0) { if (!blank) { b = b + 1; } blank = true; continue; }
+    blank = false;
+    if (b == block) { rows = push(rows, split(line, " ")); }
+  }
+  for (i in range(1, len(rows))) {
+    t0 = num(rows[i - 1][2]); t1 = num(rows[i][2]); v0 = num(rows[i - 1][col]); v1 = num(rows[i][col]);
+    if (v0 >= 0.1 && v1 < 0.1) {
+      # linear interpolation in log(v): log10 computed from powers of ten is avoided by bisection
+      lo = t0; hi = t1;
+      for (j in range(0, 40)) {
+        mid = (lo + hi) / 2.0;
+        f = (mid - t0) / (t1 - t0);
+        v = v0 * pow(v1 / v0, f);
+        if (v > 0.1) { lo = mid; } else { hi = mid; }
+      }
+      return (lo + hi) / 2.0;
+    }
+  }
+  return -1.0;
+}
+labels = "";
+names = ["Cs-137 in lead", "Co-60 in lead", "Cs-137 in concrete", "Co-60 in concrete"];
+ncrp = [2.1, 4.0, 17.5, 20.6];
+for (b in range(0, 4)) {
+  n = tvl_of(b, 3); w = tvl_of(b, 4);
+  println(f"{names[b]}: narrow-beam TVL {round(n * 100) / 100} cm, broad-beam (MC) {round(w * 100) / 100} cm, NCRP 49 {ncrp[b]} cm");
+  # an infinite broad beam has the most buildup: NCRP's finite-field values lie between it and the narrow-beam number
+  assert(w > n && w < 2.0 * n, "the broad beam needs more material, but not twice as much");
+  assert(n < ncrp[b] && ncrp[b] < 1.05 * w, f"NCRP {ncrp[b]} cm should lie between narrow {n} and infinite broad {w}");
+  labels = labels + " " + str(round(n * 10) / 10) + " " + str(round(w * 10) / 10);
+}
+l = split(trim(labels), " ");
+
+draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+plot.png("docs/images/tenth_value_layers.png", 900, 560);
+plot.cmd("set multiplot layout 1,2 title 'Tenth-value layers: narrow beam exp(-mu x) (dashed), infinite broad beam with buildup (points), NCRP 49 (triangles)' font ',11'");
+plot.cmd("set logscale y; set yrange [0.001:1]; set grid; set key top right; set ylabel 'Kerma behind the wall / kerma without wall'");
+plot.cmd("set arrow 1 from graph 0, first 0.1 to graph 1, first 0.1 nohead lc rgb '#888888' dt 2");
+plot.cmd("set title 'Lead'; set xlabel 'Lead thickness (cm)'; set xrange [0:6]");
+plot.cmd("set label 1 at graph 0.03, graph 0.12 left 'Cs-137 TVL: " + ${l[0]} + " narrow, " + ${l[1]} + " broad, NCRP 2.1 cm' font ',9'");
+plot.cmd("set label 2 at graph 0.03, graph 0.05 left 'Co-60 TVL: " + ${l[2]} + " narrow, " + ${l[3]} + " broad, NCRP 4.0 cm' font ',9'");
+plot.cmd("set label 3 at 2.1,0.1 '' point pt 9 ps 2 lc rgb '#1f77b4'; set label 4 at 4.0,0.1 '' point pt 9 ps 2 lc rgb '#d62728'");
+plot.cmd("plot 'build/visuals/tvl.csv' index 0 using 3:4 with lines dt 2 lw 2 lc rgb '#1f77b4' title 'Cs-137 exp(-mu x)', '' index 0 using 3:5:6 with yerrorlines pt 7 lw 2 lc rgb '#1f77b4' title 'Cs-137 broad beam', '' index 1 using 3:4 with lines dt 2 lw 2 lc rgb '#d62728' title 'Co-60 exp(-mu x)', '' index 1 using 3:5:6 with yerrorlines pt 5 lw 2 lc rgb '#d62728' title 'Co-60 broad beam'");
+plot.cmd("set title 'Concrete (2.3 g/cm3)'; set xlabel 'Concrete thickness (cm)'; set xrange [0:30]");
+plot.cmd("set label 1 at graph 0.03, graph 0.12 left 'Cs-137 TVL: " + ${l[4]} + " narrow, " + ${l[5]} + " broad, NCRP 17.5 cm' font ',9'");
+plot.cmd("set label 2 at graph 0.03, graph 0.05 left 'Co-60 TVL: " + ${l[6]} + " narrow, " + ${l[7]} + " broad, NCRP 20.6 cm' font ',9'");
+plot.cmd("set label 3 at 17.5,0.1 '' point pt 9 ps 2 lc rgb '#1f77b4'; set label 4 at 20.6,0.1 '' point pt 9 ps 2 lc rgb '#d62728'");
+plot.cmd("plot 'build/visuals/tvl.csv' index 2 using 3:4 with lines dt 2 lw 2 lc rgb '#1f77b4' title 'Cs-137 exp(-mu x)', '' index 2 using 3:5:6 with yerrorlines pt 7 lw 2 lc rgb '#1f77b4' title 'Cs-137 broad beam', '' index 3 using 3:4 with lines dt 2 lw 2 lc rgb '#d62728' title 'Co-60 exp(-mu x)', '' index 3 using 3:5:6 with yerrorlines pt 5 lw 2 lc rgb '#d62728' title 'Co-60 broad beam'");
+plot.cmd("unset multiplot");
+plot.close();
+end _dsl_
+savedsl(draw, "build/visuals/tenth_value_layers-draw.dslb");
+r = system ${dsl_cli(draw)} --dsl build/visuals/tenth_value_layers-draw.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+println("wrote docs/images/tenth_value_layers.png");

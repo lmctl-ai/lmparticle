@@ -1,0 +1,61 @@
+# Kerma around a Cs-137 source kept in a lead pot ("pig"): the inverse-square law times the shell's attenuation,
+# plus what scatters out of the lead and off the air. Tissue spheres at 10-100 cm are the dosimeters; the source
+# sits in a 1 cm air cavity inside a lead sphere of wall thickness 0, 0.5, 1 or 2 cm, all inside 1.2 m of air.
+# Dashed: the first-collision (uncollided-photon) kerma, which follows exp(-mu t) / r^2 exactly.
+mkdir("build/visuals");
+mkdir("docs/images");
+compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+let lead = rad.builtin("lead");
+let air = rad.builtin("air");
+let tissue = rad.builtin("tissue");
+let s = rad.source().point(0.0, 0.0, 0.0).isotropic().energy(0.662);
+let rows = "";
+for (k in range(0, 4)) {
+  let t = 0.0;
+  if (k == 1) { t = 0.5; } if (k == 2) { t = 1.0; } if (k == 3) { t = 2.0; }
+  let g = rad.geometry().sphere("cavity", air, 0.0, 0.0, 0.0, 1.0);
+  if (t > 0.0) { g.sphere("pig", lead, 0.0, 0.0, 0.0, 1.0 + t); }
+  # five dosimeters in five directions so none shadows another (radius 3 cm, distance to its centre)
+  g.sphere("d10", tissue, 10.0, 0.0, 0.0, 3.0).sphere("d20", tissue, 0.0, 20.0, 0.0, 3.0).sphere("d35", tissue, 0.0, 0.0, 35.0, 3.0);
+  g.sphere("d60", tissue, -60.0, 0.0, 0.0, 3.0).sphere("d100", tissue, 0.0, -100.0, 0.0, 3.0);
+  g.sphere("room", air, 0.0, 0.0, 0.0, 120.0);
+  let r = rad.simulation(g, s).implicit_capture(0.1).seed(700 + k).run(3000000);
+  for (i in range(0, 5)) {
+    let d = 10.0;
+    let name = "d10";
+    if (i == 1) { d = 20.0; name = "d20"; } if (i == 2) { d = 35.0; name = "d35"; }
+    if (i == 3) { d = 60.0; name = "d60"; } if (i == 4) { d = 100.0; name = "d100"; }
+    # kerma per unit mass: deposited energy per photon divided by the sphere's mass (113.1 g)
+    let m = 4.18879 * 27.0 * tissue.density();
+    rows = rows + str(t) + " " + str(d) + " " + str(r.deposited(name) / m) + " " + str(r.deposited_err(name) / m) + " " + str(r.deposited_uncollided(name) / m) + "\n";
+  }
+  rows = rows + "\n\n";
+  # the uncollided part at 10 cm falls as exp(-mu t) relative to the bare source (checked at run time against the tables)
+  rad.print("wall " + str(t) + " cm: kerma at 10 cm " + str(r.deposited("d10")) + " MeV/photon, uncollided part " + str(r.deposited_uncollided("d10")));
+}
+rad.save_text("build/visuals/dose_rate_distance.csv", rows);
+end _dsl_
+savedsl(compute, "build/visuals/dose_rate_distance-compute.dslb");
+r = system ${dsl_cli(compute)} --dsl build/visuals/dose_rate_distance-compute.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+# inverse square and shell attenuation: the uncollided kerma at 100 cm versus 10 cm, and 2 cm of lead versus none
+rows = read_lines("build/visuals/dose_rate_distance.csv");
+vals = [];
+for (line in rows) { if (len(line) > 0) { vals = push(vals, split(line, " ")); } }
+near0 = num(vals[0][4]); far0 = num(vals[4][4]); near2 = num(vals[15][4]);
+println(f"uncollided kerma ratio 100 cm / 10 cm = {far0 / near0} (1/r^2 gives 0.01, air attenuation lowers it a little)");
+assert(abs(far0 / near0 - 0.0095) < 0.002, "inverse square");
+println(f"2 cm lead wall passes {near2 / near0} of the uncollided kerma (exp(-mu t) = 0.082)");
+assert(abs(near2 / near0 - 0.082) < 0.02, "shell attenuation");
+draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+plot.png("docs/images/dose_rate_distance.png", 900, 560);
+plot.cmd("set title 'Cs-137 in a lead pot: tissue kerma versus distance (points: total, dashed: uncollided photons only)'");
+plot.cmd("set logscale xy; set grid; set xlabel 'Distance from the source (cm)'; set ylabel 'Kerma per emitted photon (MeV/g)'; set xrange [8:130]; set key top right; set format y '%.0e'");
+plot.cmd("set label 1 at 70,0.000006 'slope -2: inverse square' rotate by -38 tc rgb '#555555'");
+plot.cmd("plot 'build/visuals/dose_rate_distance.csv' index 0 using 2:3:4 with yerrorlines pt 7 lw 2 lc rgb '#1f77b4' title 'no lead', '' index 0 using 2:5 with lines dt 2 lc rgb '#1f77b4' notitle, '' index 1 using 2:3:4 with yerrorlines pt 5 lw 2 lc rgb '#2ca02c' title '0.5 cm lead wall', '' index 1 using 2:5 with lines dt 2 lc rgb '#2ca02c' notitle, '' index 2 using 2:3:4 with yerrorlines pt 9 lw 2 lc rgb '#ff7f0e' title '1 cm lead wall', '' index 2 using 2:5 with lines dt 2 lc rgb '#ff7f0e' notitle, '' index 3 using 2:3:4 with yerrorlines pt 13 lw 2 lc rgb '#d62728' title '2 cm lead wall', '' index 3 using 2:5 with lines dt 2 lc rgb '#d62728' notitle");
+plot.close();
+end _dsl_
+savedsl(draw, "build/visuals/dose_rate_distance-draw.dslb");
+r = system ${dsl_cli(draw)} --dsl build/visuals/dose_rate_distance-draw.dslb;
+assert(r.code == 0, r.stdout + r.stderr);
+println("wrote docs/images/dose_rate_distance.png");

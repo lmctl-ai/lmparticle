@@ -23,7 +23,8 @@ if (ARGV.len() == 0) {
   assert(r.code == 0, r.stdout + r.stderr);
   plot = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
   plot.png("docs/images/detector_response.png", 900, 560);
-  plot.cmd("set title 'NaI detector response to 662 keV photons'; set xlabel 'Deposited energy (MeV)'; set ylabel 'Fraction per bin'; set grid; set key off");
+  plot.cmd("set title 'NaI detector response to 662 keV photons: photopeak, Compton continuum and edge'; set xlabel 'Deposited energy (MeV)'; set ylabel 'Fraction of histories per bin'; set logscale y; set yrange [0.000001:0.1]; set grid; set key off");
+  plot.cmd("set arrow 1 from 0.477,0.0008 to 0.477,0.0003 lw 2; set label 1 at 0.477,0.0012 center 'Compton edge 477 keV'; set label 2 at 0.64,0.03 right 'photopeak'");
   plot.cmd("plot 'build/examples/detector_response.csv' using 1:3 with steps lw 2 lc rgb '#d62728'");
   plot.close();
 end _dsl_
