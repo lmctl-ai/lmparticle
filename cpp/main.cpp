@@ -1,6 +1,7 @@
 // lmparticle: Monte Carlo photon transport (NIST XCOM cross sections, Klein-Nishina Compton) behind an lmscript `_dsl_`
 // schema. Scripting only: the executable has no user-facing commands besides --dsl and the schema/version queries.
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -14,6 +15,7 @@
 #endif
 
 #include "dslvm.hpp"
+#include "memory_budget.hpp"
 #include "notices_embedded.hpp"
 #include "schema_embedded.hpp"
 #include "transport.hpp"
@@ -258,6 +260,14 @@ void register_host(dslvm::Registry &r, Host &h) {
   method(r, "Sim", "run", {"int"}, "Result", [&h](void *p, Args &a) {
     need(a[0].i >= 1 && a[0].i <= 1000000000, "Sim.run: histories must be 1..1000000000");
     auto &s = obj<SimSpec>(p);
+    // Fail before transport if the tallies (sum, sum2, current value, touched flag and index per
+    // cell) and the Result kept in the arena (one Stat per cell) do not fit the memory budget.
+    const size_t bins = (size_t)s.cfg.bins, npl = s.cfg.planes.size(), npulse = s.cfg.pulse_regions.size();
+    const size_t nbox = s.geo.boxes.size();
+    const double cells = double(nbox + 1 + 3 * npl + 7) + double(npulse + npl + 1) * double(bins);
+    const double kept = double(nbox + 3 * npl) + double(npl + npulse + 1) * double(bins);
+    const double bytes = cells * (4 * sizeof(double) + 1) + kept * sizeof(Stat);
+    membudget::require(bytes < 1e18 ? (size_t)bytes : SIZE_MAX);
     return h.hold(h.results, "Result", run(s.geo, s.src, s.cfg, a[0].i));
   });
 
@@ -321,7 +331,9 @@ void register_host(dslvm::Registry &r, Host &h) {
   });
 }
 
-const char *usage = "usage: lmparticle --version | --notices | --dsl-schema [--json] | --dsl-signatures | [--dry-run] --dsl FILE [FILE ...]\n";
+const char *usage = "usage: lmparticle --version | --notices | --dsl-schema [--json] | --dsl-signatures | [--dry-run] --dsl FILE [FILE ...]\n"
+                    "environment: LMPARTICLE_MAX_MEMORY_MB  total memory budget in MiB (default 4096); a program that needs more\n"
+                    "             stops with a run error (exit 3) instead of allocating\n";
 }  // namespace
 
 int main(int argc, char **argv) {
@@ -363,6 +375,7 @@ int main(int argc, char **argv) {
     } else files.push_back(argv[i]);
   }
   if (files.empty()) { std::cerr << usage; return 2; }
+  if (!membudget::configure("lmparticle", "LMPARTICLE_MAX_MEMORY_MB")) { std::cerr << usage; return 2; }
   const std::string schema(reinterpret_cast<const char *>(lmparticle::embedded_schema), lmparticle::embedded_schema_size);
   dslvm::Context ctx;
   Rad rad;
@@ -371,10 +384,12 @@ int main(int argc, char **argv) {
   for (const auto &file : files)
     try { programs.push_back(dslvm::Program::load(dslvm::read_file(file), schema, reg)); }
     catch (const dslvm::Error &e) { return dslvm::report_error("load", e); }
+    catch (const std::exception &e) { return dslvm::report_error("load", dslvm::Error(e.what())); }
   if (dry) { dslvm::report_ok(); return 0; }
   for (const auto &p : programs) {
     try { p.run(ctx, reg); }
     catch (const dslvm::Error &e) { return dslvm::report_error("run", e); }
+    catch (const std::exception &e) { return dslvm::report_error("run", dslvm::Error(e.what())); }  // budget in the VM
     dslvm::report_ok();
   }
   return 0;

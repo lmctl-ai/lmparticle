@@ -131,6 +131,44 @@ expect_error nan_plane 'let g = rad.geometry(); g.slab("a", rad.builtin("water")
 expect_error builtin_change 'let m = rad.builtin("water").element("Pb", 1.0);' "builtin material cannot be changed"
 ok "errors stop with exit 3 and clear messages (24 cases)"
 
+# Memory budget: a runaway loop of runs with large spectrum tallies stops with a run error (exit 3,
+# message on stderr and in the JSON line) instead of exhausting the machine. A small budget everywhere;
+# on Linux also the default 4096 MiB under a 6 GiB address-space limit (ulimit only here, never in the host).
+cat >"$WORK/runaway.lms" <<LMS
+p = _dsl_ cli="lmparticle";
+let g = rad.geometry();
+g.slab("a", rad.builtin("water"), 0.0, 1.0);
+let s = rad.source();
+s.energy(1.0);
+let sim = rad.simulation(g, s).spectrum(100000, 1.0);
+let k = 0;
+while (k < 100) {
+  sim.plane("p" + str(k), "z", 0.5);
+  k = k + 1;
+}
+let i = 0;
+while (i < 1000000) {
+  let r = sim.run(1);
+  i = i + 1;
+}
+end _dsl_
+savedsl(p, "$WORK/runaway.dslb");
+LMS
+"$LMSCRIPT" "$WORK/runaway.lms" >/dev/null || fail "runaway.lms compile"
+set +e; out="$(LMPARTICLE_MAX_MEMORY_MB=64 "$HOST" --dsl "$WORK/runaway.dslb" 2>"$WORK/runaway.err")"; code=$?; set -e
+[ "$code" = 3 ] || fail "runaway loop under LMPARTICLE_MAX_MEMORY_MB=64: exit $code, expected 3 ($out)"
+echo "$out" | grep -q "memory budget exceeded" || fail "runaway loop: JSON lacks the budget message: $out"
+grep -q "LMPARTICLE_MAX_MEMORY_MB" "$WORK/runaway.err" || fail "runaway loop: no budget message on stderr"
+set +e; LMPARTICLE_MAX_MEMORY_MB=-5 "$HOST" --dsl "$WORK/runaway.dslb" >/dev/null 2>"$WORK/badenv.err"; code=$?; set -e
+[ "$code" = 2 ] && grep -q "positive whole number" "$WORK/badenv.err" || fail "bad LMPARTICLE_MAX_MEMORY_MB: exit $code"
+if [ "$UNAME_S" = Linux ]; then
+  set +e; out="$(ulimit -v 6291456; "$HOST" --dsl "$WORK/runaway.dslb" 2>/dev/null)"; code=$?; set -e
+  [ "$code" = 3 ] && echo "$out" | grep -q "limit 4096 MiB" || fail "runaway loop with the default budget under ulimit -v 6 GiB: exit $code ($out)"
+  ok "memory budget: runaway loop stops at 64 MiB and at the default 4096 MiB (under ulimit -v 6 GiB)"
+else
+  ok "memory budget: runaway loop stops at LMPARTICLE_MAX_MEMORY_MB=64 (default-budget run is Linux-only)"
+fi
+
 # Combined pipelines (lmparticle simulates, lmplot draws). Need lmplot on PATH, or network for install=.
 if command -v lmplot >/dev/null 2>&1 || [ "${LMPARTICLE_TEST_NETWORK:-}" = 1 ]; then
   for name in shielding_plot detector_spectrum; do

@@ -107,6 +107,12 @@ rest. That is accurate for attenuation, shielding, buildup and detector counting
 above a few tens of keV in low and medium Z; it is not a substitute for Geant4 where charged-particle
 ranges matter. See [durable-memory/03-physics-and-limits.md](durable-memory/03-physics-and-limits.md).
 
+## Resource limits
+
+A program may use at most 4096 MiB in total (tallies, spectra, results, every object the host keeps);
+beyond that it stops with a run error (exit 3) naming the limit, instead of exhausting the machine.
+Set `LMPARTICLE_MAX_MEMORY_MB` to change it, e.g. `LMPARTICLE_MAX_MEMORY_MB=16384 lmscript big.lms`.
+
 ## License
 
 MIT ([LICENSE](LICENSE)). The embedded cross sections are NIST XCOM data (public data of the U.S.

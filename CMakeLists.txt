@@ -27,7 +27,7 @@ file(WRITE "${GEN}/xcom_embedded.hpp" "#pragma once\n#include <cstddef>\nnamespa
 add_library(particle_core STATIC cpp/xs.cpp cpp/transport.cpp)
 target_include_directories(particle_core PUBLIC cpp "${GEN}")
 target_compile_options(particle_core PRIVATE -Wall -Wextra -Wpedantic)
-add_executable(lmparticle cpp/main.cpp)
+add_executable(lmparticle cpp/main.cpp cpp/memory_budget.cpp)
 target_compile_definitions(lmparticle PRIVATE LMPARTICLE_VERSION="${PROJECT_VERSION}")
 target_include_directories(lmparticle PRIVATE cpp "${GEN}")
 target_link_libraries(lmparticle PRIVATE particle_core)
