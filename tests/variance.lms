@@ -1,0 +1,42 @@
+# Implicit capture with Russian roulette gives the analog means with smaller errors deep in a shield; first-collision
+# deposits; photon tracks; a user element table.
+out = ARGV.len() > 0 ? ARGV[0] : "build/variance.dslb";
+p = _dsl_ cli="lmparticle";
+let e1 = 2.718281828459045;
+let pb = rad.builtin("lead");
+# four 0.5 cm lead layers at 300 keV (photoabsorption dominates)
+let g = rad.geometry();
+g.slab("L0", pb, 0.0, 0.5).slab("L1", pb, 0.5, 1.0).slab("L2", pb, 1.0, 1.5).slab("L3", pb, 1.5, 2.0);
+let s = rad.source();
+s.point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(0.3);
+let a = rad.simulation(g, s).plane("exit", "z", 2.0).seed(71).run(200000);
+let b = rad.simulation(g, s).plane("exit", "z", 2.0).implicit_capture(0.05).seed(71).run(200000);
+rad.assert_true(abs(b.plane_uncollided("exit") - pow(e1, -2.0 * pb.mu(0.3))) < 4.0 * b.plane_uncollided_err("exit"));
+rad.assert_true(abs(a.deposited("L3") - b.deposited("L3")) < 4.0 * (a.deposited_err("L3") + b.deposited_err("L3")));
+rad.assert_true(abs(a.plane_count("exit") - b.plane_count("exit")) < 4.0 * (a.plane_count_err("exit") + b.plane_count_err("exit")));
+rad.assert_true(b.deposited_err("L3") < a.deposited_err("L3"));
+rad.assert_true(b.plane_count_err("exit") < a.plane_count_err("exit"));
+# analog transport conserves energy exactly; with roulette only in expectation
+rad.assert_close(a.total_deposited() + a.escaped_energy(), 0.3, 0.000000001);
+rad.assert_true(abs(b.total_deposited() + b.escaped_energy() - 0.3) < 0.01);
+# the first-collision deposit is nearly all of it in a thin film and part of it in a thick layer
+let film = rad.geometry();
+film.slab("film", pb, 0.0, 0.001);
+let rf = rad.simulation(film, s).seed(72).run(100000);
+rad.assert_true(rf.deposited_uncollided("film") > 0.9 * rf.deposited("film"));
+rad.assert_true(rf.deposited_uncollided_err("film") > 0.0);
+rad.assert_true(a.deposited_uncollided("L0") < 0.95 * a.deposited("L0"));
+rad.assert_true(a.deposited_uncollided("L0") > 0.3 * a.deposited("L0"));
+# tracks of the first 20 histories: written as text, every history starts at the source position
+let t = rad.simulation(g, s).tracks(20).seed(73).run(100);
+rad.assert_true(t.track_points() >= 40);
+t.save_tracks("build/variance_tracks.csv");
+let t0 = rad.simulation(g, s).seed(73).run(100);
+rad.assert_true(t0.track_points() == 0);
+rad.assert_close(t0.deposited("L0"), t.deposited("L0"), 0.0);
+# a user element table (two rows, log-log interpolated) builds a material: at 1 MeV photo = 100 * (0.001/100)^(log(1000)/log(20000)) = 0.03254
+rad.element_table("Xq", 50, "0.001 1.0 0.1 100.0 0 0\n20.0 0.0001 0.01 0.001 0.02 0.001\n");
+let xq = rad.material("xq", 2.0).element("Xq", 1.0);
+rad.assert_close(xq.mu_partial(1.0, "photo"), 2.0 * 0.0325434, 0.0001);
+end _dsl_
+savedsl(p, out);

@@ -109,6 +109,11 @@ void register_host(dslvm::Registry &r, Host &h) {
     need(a[1].f > 0 && std::isfinite(a[1].f), "Rad.material: density must be positive and finite (g/cm3)");
     return h.hold(h.materials, "Material", MaterialSpec{a[0].s, a[1].f, {}, nullptr, false});
   });
+  method(r, "Rad", "element_table", {"string", "int", "string"}, "void", [](void *, Args &a) {
+    need(a[1].i >= 1 && a[1].i <= 118, "Rad.element_table: Z must be 1..118");
+    add_element(a[0].s, (int)a[1].i, a[2].s);
+    return Value::none();
+  });
   method(r, "Rad", "klein_nishina", {"float"}, "float", [](void *, Args &a) { return Value::real(klein_nishina_total(energy_arg(a[0].f, "Rad.klein_nishina"))); });
   method(r, "Rad", "compton_mean_transfer", {"float"}, "float", [](void *, Args &a) { return Value::real(compton_mean_transfer(energy_arg(a[0].f, "Rad.compton_mean_transfer"))); });
   method(r, "Rad", "sample_compton_mean", {"float", "int", "int"}, "float", [](void *, Args &a) {
@@ -193,6 +198,36 @@ void register_host(dslvm::Registry &r, Host &h) {
     add_box(p, "Geometry.slab", a[0].s, a[1], lo, hi);
     return Value::object("Geometry", p);
   });
+  auto add_region = [](void *p, const char *who, const std::string &name, Value &mat, Box b) {
+    auto &geo = obj<GeometrySpec>(p).geo;
+    for (auto &o : geo.boxes) need(o.name != name, std::string(who) + ": duplicate region name '" + name + "'");
+    b.name = name;
+    b.material = arg<MaterialSpec>(mat).built ? arg<MaterialSpec>(mat).built : (arg<MaterialSpec>(mat).get(), arg<MaterialSpec>(mat).built);
+    geo.boxes.push_back(std::move(b));
+  };
+  method(r, "Geometry", "sphere", {"string", "Material", "float", "float", "float", "float"}, "Geometry", [add_region](void *p, Args &a) {
+    need(std::isfinite(a[2].f) && std::isfinite(a[3].f) && std::isfinite(a[4].f), "Geometry.sphere: center must be finite (cm)");
+    need(a[5].f > 0 && std::isfinite(a[5].f), "Geometry.sphere: radius must be positive and finite (cm)");
+    Box b;
+    b.shape = kSphereShape;
+    for (int i = 0; i < 3; i++) { b.center[i] = a[2 + i].f; b.lo[i] = b.center[i] - a[5].f; b.hi[i] = b.center[i] + a[5].f; }
+    b.radius = a[5].f;
+    add_region(p, "Geometry.sphere", a[0].s, a[1], std::move(b));
+    return Value::object("Geometry", p);
+  });
+  method(r, "Geometry", "cylinder", {"string", "Material", "float", "float", "float", "float", "float"}, "Geometry", [add_region](void *p, Args &a) {
+    need(std::isfinite(a[2].f) && std::isfinite(a[3].f), "Geometry.cylinder: axis position must be finite (cm)");
+    need(a[4].f > 0 && std::isfinite(a[4].f), "Geometry.cylinder: radius must be positive and finite (cm)");
+    need(a[5].f < a[6].f, "Geometry.cylinder: needs z0 < z1");
+    Box b;
+    b.shape = kCylinderShape;
+    b.center[0] = a[2].f; b.center[1] = a[3].f; b.center[2] = 0;
+    b.radius = a[4].f;
+    for (int i = 0; i < 2; i++) { b.lo[i] = b.center[i] - b.radius; b.hi[i] = b.center[i] + b.radius; }
+    b.lo[2] = a[5].f; b.hi[2] = a[6].f;
+    add_region(p, "Geometry.cylinder", a[0].s, a[1], std::move(b));
+    return Value::object("Geometry", p);
+  });
   method(r, "Geometry", "regions", {}, "int", [](void *p, Args &) { return Value::integer((int64_t)obj<GeometrySpec>(p).geo.boxes.size()); });
 
   // ---------------------------------------------------------------- Source
@@ -207,6 +242,21 @@ void register_host(dslvm::Registry &r, Host &h) {
     auto &s = obj<Source>(p);
     s.isotropic = false;
     for (int i = 0; i < 3; i++) s.dir[i] = a[i].f / n;
+    return Value::object("Source", p);
+  });
+  method(r, "Source", "cone", {"float", "float", "float", "float"}, "Source", [](void *p, Args &a) {
+    double n = std::sqrt(a[0].f * a[0].f + a[1].f * a[1].f + a[2].f * a[2].f);
+    need(n > 0 && std::isfinite(n), "Source.cone: axis must be a nonzero vector");
+    need(a[3].f >= 0 && a[3].f <= 180, "Source.cone: half-angle must be 0..180 degrees");
+    auto &s = obj<Source>(p);
+    s.isotropic = false;
+    for (int i = 0; i < 3; i++) s.dir[i] = a[i].f / n;
+    s.cone_cos = std::cos(a[3].f * 3.14159265358979323846 / 180);
+    return Value::object("Source", p);
+  });
+  method(r, "Source", "disc", {"float"}, "Source", [](void *p, Args &a) {
+    need(a[0].f >= 0 && std::isfinite(a[0].f), "Source.disc: radius must be finite and not negative (cm)");
+    obj<Source>(p).disc_radius = a[0].f;
     return Value::object("Source", p);
   });
   method(r, "Source", "isotropic", {}, "Source", [](void *p, Args &) { obj<Source>(p).isotropic = true; return Value::object("Source", p); });
@@ -251,6 +301,16 @@ void register_host(dslvm::Registry &r, Host &h) {
     obj<SimSpec>(p).cfg.cutoff = a[0].f;
     return Value::object("Sim", p);
   });
+  method(r, "Sim", "implicit_capture", {"float"}, "Sim", [](void *p, Args &a) {
+    need(a[0].f > 0 && a[0].f < 1, "Sim.implicit_capture: the roulette weight cutoff must lie in (0, 1)");
+    obj<SimSpec>(p).cfg.weight_cutoff = a[0].f;
+    return Value::object("Sim", p);
+  });
+  method(r, "Sim", "tracks", {"int"}, "Sim", [](void *p, Args &a) {
+    need(a[0].i >= 0 && a[0].i <= 100000, "Sim.tracks: histories to record must be 0..100000");
+    obj<SimSpec>(p).cfg.track_histories = a[0].i;
+    return Value::object("Sim", p);
+  });
   method(r, "Sim", "no_rayleigh", {}, "Sim", [](void *p, Args &) { obj<SimSpec>(p).cfg.rayleigh = false; return Value::object("Sim", p); });
   method(r, "Sim", "seed", {"int"}, "Sim", [](void *p, Args &a) {
     need(a[0].i >= 0, "Sim.seed: seed must not be negative");
@@ -278,6 +338,8 @@ void register_host(dslvm::Registry &r, Host &h) {
   method(r, "Result", "source_energy", {}, "float", [](void *p, Args &) { return Value::real(obj<Result>(p).source_energy); });
   method(r, "Result", "deposited", {"string"}, "float", [region](void *p, Args &a) { return Value::real(obj<Result>(p).deposited[region(p, a[0].s)].mean); });
   method(r, "Result", "deposited_err", {"string"}, "float", [region](void *p, Args &a) { return Value::real(obj<Result>(p).deposited[region(p, a[0].s)].err); });
+  method(r, "Result", "deposited_uncollided", {"string"}, "float", [region](void *p, Args &a) { return Value::real(obj<Result>(p).deposited_uncollided[region(p, a[0].s)].mean); });
+  method(r, "Result", "deposited_uncollided_err", {"string"}, "float", [region](void *p, Args &a) { return Value::real(obj<Result>(p).deposited_uncollided[region(p, a[0].s)].err); });
   method(r, "Result", "total_deposited", {}, "float", [](void *p, Args &) { return Value::real(obj<Result>(p).total_deposited.mean); });
   method(r, "Result", "total_deposited_err", {}, "float", [](void *p, Args &) { return Value::real(obj<Result>(p).total_deposited.err); });
   method(r, "Result", "escaped", {}, "float", [](void *p, Args &) { return Value::real(obj<Result>(p).escaped.mean); });
@@ -323,6 +385,19 @@ void register_host(dslvm::Registry &r, Host &h) {
   });
   method(r, "Result", "save_plane_spectrum", {"string", "string"}, "void", [plane, spectrum_text](void *p, Args &a) {
     save(a[1].s, spectrum_text(obj<Result>(p), obj<Result>(p).plane_spectrum[plane(p, a[0].s)]), "Result.save_plane_spectrum");
+    return Value::none();
+  });
+  method(r, "Result", "track_points", {}, "int", [](void *p, Args &) { return Value::integer((int64_t)obj<Result>(p).tracks.size()); });
+  method(r, "Result", "save_tracks", {"string"}, "void", [](void *p, Args &a) {
+    auto &x = obj<Result>(p);
+    std::string t = "# history x y z dx dy dz energy_MeV weight event\n";
+    for (const TrackPoint &k : x.tracks) {
+      t += std::to_string(k.history);
+      for (double v : k.x) t += " " + g(v);
+      for (double v : k.d) t += " " + g(v);
+      t += " " + g(k.e) + " " + g(k.weight) + " " + k.event + "\n";
+    }
+    save(a[0].s, t, "Result.save_tracks");
     return Value::none();
   });
   method(r, "Result", "save_leakage_spectrum", {"string"}, "void", [spectrum_text](void *p, Args &a) {

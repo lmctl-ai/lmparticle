@@ -1,0 +1,92 @@
+# Curved regions and extended sources: sphere and cylinder chords give exp(-mu chord); a cone and a disc source
+# reach a black target in proportion to solid angle and area; the new builtin materials have XCOM values.
+out = ARGV.len() > 0 ? ARGV[0] : "build/curved.dslb";
+p = _dsl_ cli="lmparticle";
+let e1 = 2.718281828459045;
+let pb = rad.builtin("lead");
+let w = rad.builtin("tungsten");
+let mu = pb.mu(1.0);
+
+# a lead ball of radius 1 cm off the origin: through the center (chord 2), at impact parameter 0.6 (chord 1.6), and a miss
+let ball = rad.geometry();
+ball.sphere("ball", pb, 1.0, -2.0, 3.0, 1.0);
+let s = rad.source();
+s.point(-5.0, -2.0, 3.0).beam(1.0, 0.0, 0.0).energy(1.0);
+let r = rad.simulation(ball, s).seed(51).run(100000);
+rad.assert_true(abs(r.escaped_uncollided() - pow(e1, -2.0 * mu)) < 4.0 * r.escaped_uncollided_err());
+rad.assert_close(r.total_deposited() + r.escaped_energy(), 1.0, 0.000000001);
+let s2 = rad.source();
+s2.point(-5.0, -1.4, 3.0).beam(1.0, 0.0, 0.0).energy(1.0);
+let r2 = rad.simulation(ball, s2).seed(52).run(100000);
+rad.assert_true(abs(r2.escaped_uncollided() - pow(e1, -1.6 * mu)) < 4.0 * r2.escaped_uncollided_err());
+let s3 = rad.source();
+s3.point(-5.0, -0.9, 3.0).beam(1.0, 0.0, 0.0).energy(1.0);
+rad.assert_close(rad.simulation(ball, s3).seed(53).run(1000).escaped_uncollided(), 1.0, 0.0);
+# from the center every direction sees exactly R of lead
+let s4 = rad.source();
+s4.point(1.0, -2.0, 3.0).isotropic().energy(1.0);
+let r4 = rad.simulation(ball, s4).seed(54).run(100000);
+rad.assert_true(abs(r4.escaped_uncollided() - pow(e1, -mu)) < 4.0 * r4.escaped_uncollided_err());
+
+# a lead rod (radius 0.5, z from -1 to 2) along its axis (3 cm), across through the axis (1 cm), across at impact 0.3 (0.8 cm)
+let rod = rad.geometry();
+rod.cylinder("rod", pb, 2.0, 1.0, 0.5, -1.0, 2.0);
+let a1 = rad.source();
+a1.point(2.0, 1.0, -5.0).beam(0.0, 0.0, 1.0).energy(1.0);
+let q1 = rad.simulation(rod, a1).seed(55).run(100000);
+rad.assert_true(abs(q1.escaped_uncollided() - pow(e1, -3.0 * mu)) < 4.0 * q1.escaped_uncollided_err());
+let a2 = rad.source();
+a2.point(-5.0, 1.0, 1.0).beam(1.0, 0.0, 0.0).energy(1.0);
+let q2 = rad.simulation(rod, a2).seed(56).run(100000);
+rad.assert_true(abs(q2.escaped_uncollided() - pow(e1, -mu)) < 4.0 * q2.escaped_uncollided_err());
+let a3 = rad.source();
+a3.point(-5.0, 1.3, 1.0).beam(1.0, 0.0, 0.0).energy(1.0);
+let q3 = rad.simulation(rod, a3).seed(57).run(100000);
+rad.assert_true(abs(q3.escaped_uncollided() - pow(e1, -0.8 * mu)) < 4.0 * q3.escaped_uncollided_err());
+# regions mix: a sphere listed first wins inside a box
+let mix = rad.geometry();
+mix.sphere("core", pb, 0.0, 0.0, 0.0, 1.0).box("tank", rad.builtin("water"), -3.0, 3.0, -3.0, 3.0, -3.0, 3.0);
+let m = rad.source();
+m.point(-3.0, 0.0, 0.0).beam(1.0, 0.0, 0.0).energy(1.0);
+let rm = rad.simulation(mix, m).seed(58).run(100000);
+rad.assert_true(abs(rm.escaped_uncollided() - pow(e1, -2.0 * mu - 4.0 * rad.builtin("water").mu(1.0))) < 4.0 * rm.escaped_uncollided_err());
+rad.assert_true(rm.deposited("core") > 0.0 && rm.deposited("tank") > 0.0);
+
+# a 30 degree cone aimed at a tungsten ball that subtends 10 degrees: the hit fraction is (1 - cos 10) / (1 - cos 30)
+let target = rad.geometry();
+target.sphere("target", w, 0.0, 0.0, 10.0, 10.0 * 0.17364817766693033);
+let c = rad.source();
+c.point(0.0, 0.0, 0.0).cone(0.0, 0.0, 1.0, 30.0).energy(0.03);
+let rc = rad.simulation(target, c).seed(59).run(200000);
+let hit = 1.0 - rc.escaped_uncollided();
+rad.assert_true(abs(hit - (1.0 - 0.984807753012208) / (1.0 - 0.8660254037844387)) < 4.0 * rc.escaped_uncollided_err() + 0.002);
+# a cone of half-angle 0 is the pencil beam
+let c0 = rad.source();
+c0.point(0.0, 0.0, 0.0).cone(0.0, 0.0, 1.0, 0.0).energy(0.03);
+rad.assert_close(rad.simulation(target, c0).seed(60).run(1000).escaped_uncollided(), 0.0, 0.0);
+# a disc of radius 1 onto a 1 x 1 cm plate: 1/pi of the beam hits; a disc of radius 0.4 is inside the plate
+let plate = rad.geometry();
+plate.box("plate", w, -0.5, 0.5, -0.5, 0.5, 5.0, 7.0);
+let d = rad.source();
+d.point(0.0, 0.0, 0.0).beam(0.0, 0.0, 1.0).disc(1.0).energy(0.03);
+let rd = rad.simulation(plate, d).seed(61).run(200000);
+rad.assert_true(abs(1.0 - rd.escaped_uncollided() - 0.3183098861837907) < 4.0 * rd.escaped_uncollided_err() + 0.002);
+let d2 = rad.source();
+d2.point(0.0, 0.0, 0.0).beam(0.0, 0.0, 1.0).disc(0.4).energy(0.03);
+rad.assert_close(rad.simulation(plate, d2).seed(62).run(2000).escaped_uncollided(), 0.0, 0.0);
+# the disc is perpendicular to the beam: a beam along x with a disc of radius 1 misses a plate 0.1 cm wide in y but 3 cm tall in z half the time it would along z
+let plate2 = rad.geometry();
+plate2.box("plate", w, 5.0, 7.0, -0.05, 0.05, -2.0, 2.0);
+let d3 = rad.source();
+d3.point(0.0, 0.0, 0.0).beam(1.0, 0.0, 0.0).disc(1.0).energy(0.03);
+let rd3 = rad.simulation(plate2, d3).seed(63).run(100000);
+rad.assert_true(abs(1.0 - rd3.escaped_uncollided() - 0.2 / 3.141592653589793) < 4.0 * rd3.escaped_uncollided_err() + 0.003);
+
+# new builtin materials: ICRU-44 cortical bone and PMMA mass attenuation at 100 keV (XCOM: 0.1855 and 0.1641 cm2/g)
+let bone = rad.builtin("bone");
+let pmma = rad.builtin("pmma");
+rad.assert_close(bone.mu_mass(0.1), 0.1855, 0.002);
+rad.assert_close(pmma.mu_mass(0.1), 0.1641, 0.002);
+rad.assert_close(bone.density(), 1.92, 0.0);
+end _dsl_
+savedsl(p, out);

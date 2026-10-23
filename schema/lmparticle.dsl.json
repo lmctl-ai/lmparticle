@@ -21,6 +21,16 @@
             "returns": "Material"
           }
         ],
+        "element_table": [
+          {
+            "params": [
+              "string",
+              "int",
+              "string"
+            ],
+            "returns": "void"
+          }
+        ],
         "klein_nishina": [
           {
             "params": [
@@ -205,6 +215,33 @@
             "returns": "Geometry"
           }
         ],
+        "sphere": [
+          {
+            "params": [
+              "string",
+              "Material",
+              "float",
+              "float",
+              "float",
+              "float"
+            ],
+            "returns": "Geometry"
+          }
+        ],
+        "cylinder": [
+          {
+            "params": [
+              "string",
+              "Material",
+              "float",
+              "float",
+              "float",
+              "float",
+              "float"
+            ],
+            "returns": "Geometry"
+          }
+        ],
         "regions": [
           {
             "params": [],
@@ -230,6 +267,25 @@
             "params": [
               "float",
               "float",
+              "float"
+            ],
+            "returns": "Source"
+          }
+        ],
+        "cone": [
+          {
+            "params": [
+              "float",
+              "float",
+              "float",
+              "float"
+            ],
+            "returns": "Source"
+          }
+        ],
+        "disc": [
+          {
+            "params": [
               "float"
             ],
             "returns": "Source"
@@ -297,6 +353,22 @@
             "returns": "Sim"
           }
         ],
+        "implicit_capture": [
+          {
+            "params": [
+              "float"
+            ],
+            "returns": "Sim"
+          }
+        ],
+        "tracks": [
+          {
+            "params": [
+              "int"
+            ],
+            "returns": "Sim"
+          }
+        ],
         "no_rayleigh": [
           {
             "params": [],
@@ -344,6 +416,22 @@
           }
         ],
         "deposited_err": [
+          {
+            "params": [
+              "string"
+            ],
+            "returns": "float"
+          }
+        ],
+        "deposited_uncollided": [
+          {
+            "params": [
+              "string"
+            ],
+            "returns": "float"
+          }
+        ],
+        "deposited_uncollided_err": [
           {
             "params": [
               "string"
@@ -472,6 +560,20 @@
           {
             "params": [
               "string",
+              "string"
+            ],
+            "returns": "void"
+          }
+        ],
+        "track_points": [
+          {
+            "params": [],
+            "returns": "int"
+          }
+        ],
+        "save_tracks": [
+          {
+            "params": [
               "string"
             ],
             "returns": "void"

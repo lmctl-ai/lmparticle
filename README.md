@@ -51,14 +51,22 @@ xoshiro256** generator: the same program gives the same numbers, bit for bit, on
 
 | `rad.` | |
 | --- | --- |
-| `builtin("water")` `material(name, density)` → `Material` | builtin: water air lead iron aluminum copper tungsten silicon germanium concrete nai polyethylene tissue; custom: `.element("Pb", mass_fraction)` for H C N O Na Mg Al Si P S Ar K Ca Fe Cu Ge I W Pb |
+| `builtin("water")` `material(name, density)` → `Material` | builtin: water air lead iron aluminum copper tungsten silicon germanium concrete nai polyethylene tissue bone pmma; custom: `.element("Pb", mass_fraction)` for H C N O Na Mg Al Si P S Ar K Ca Fe Cu Ge I W Pb, or any element given with `element_table(symbol, Z, text)` (XCOM rows: `E coherent incoherent photo pair_nuclear pair_electron`) |
 | `Material` | `.mu(E)` 1/cm, `.mu_mass(E)` cm2/g, `.mu_partial(E, "rayleigh"\|"compton"\|"photo"\|"pair")`, `.mfp(E)`, `.hvl(E)`, `.density() .name()` |
-| `geometry()` → `Geometry` | `.box(name, material, x0, x1, y0, y1, z0, z1)` `.slab(name, material, z0, z1)`; earlier regions win where they overlap, outside is vacuum |
-| `source()` → `Source` | `.point(x, y, z)` `.isotropic()` `.beam(dx, dy, dz)` `.energy(E)` `.line(E, weight)` |
-| `simulation(geometry, source)` → `Sim` | `.plane(name, "x"\|"y"\|"z", pos)` `.spectrum(bins, emax)` `.pulse_height(region)` `.cutoff(E)` `.no_rayleigh()` `.seed(n)` `.run(histories)` → `Result` |
-| `Result` | `.deposited(region)` `.total_deposited()` `.escaped()` `.escaped_uncollided()` `.escaped_energy()` `.plane_count(p)` `.plane_uncollided(p)` `.plane_energy(p)` `.interactions(process)` `.pulse_fraction(region, lo, hi)` (each with `_err` where it has a statistical error), `.save_regions .save_plane_spectrum .save_leakage_spectrum .save_pulse_height` |
+| `geometry()` → `Geometry` | `.box(name, material, x0, x1, y0, y1, z0, z1)` `.slab(name, material, z0, z1)` `.sphere(name, material, cx, cy, cz, r)` `.cylinder(name, material, cx, cy, r, z0, z1)` (axis along z); earlier regions win where they overlap, outside is vacuum |
+| `source()` → `Source` | `.point(x, y, z)` `.isotropic()` `.beam(dx, dy, dz)` `.cone(dx, dy, dz, half_angle_deg)` `.disc(radius)` (start points spread over a disc perpendicular to the beam) `.energy(E)` `.line(E, weight)` |
+| `simulation(geometry, source)` → `Sim` | `.plane(name, "x"\|"y"\|"z", pos)` `.spectrum(bins, emax)` `.pulse_height(region)` `.cutoff(E)` `.no_rayleigh()` `.implicit_capture(weight_cutoff)` `.tracks(histories)` `.seed(n)` `.run(histories)` → `Result` |
+| `Result` | `.deposited(region)` `.deposited_uncollided(region)` `.total_deposited()` `.escaped()` `.escaped_uncollided()` `.escaped_energy()` `.plane_count(p)` `.plane_uncollided(p)` `.plane_energy(p)` `.interactions(process)` `.pulse_fraction(region, lo, hi)` (each with `_err` where it has a statistical error), `.save_regions .save_plane_spectrum .save_leakage_spectrum .save_pulse_height .save_tracks` |
 | physics helpers | `klein_nishina(E)` cm2/electron, `compton_mean_transfer(E)`, `sample_compton_mean(E, n, seed)` |
 | checks and output | `assert_close(a, b, tol)` `assert_true(bool)` `print(s)` `save_text(path, text)` `version()` |
+
+`deposited` is the energy handed to electrons and positrons at the photon interaction points, which is
+**collision kerma**, not absorbed dose: charged particles are not transported (see Scope).
+`deposited_uncollided` is the part of it from photons at their first interaction, so
+`deposited / deposited_uncollided` is the kerma buildup factor of a region.
+`implicit_capture(w)` replaces photoabsorption by a weight reduction with Russian roulette below weight `w`
+(same means, smaller errors deep in a shield; not allowed with `pulse_height`).
+`tracks(n)` records the interaction vertices of the first `n` histories for `save_tracks(path)`.
 
 All tallies are per source photon with the standard error of the mean. Physics, models and their limits:
 [durable-memory/03-physics-and-limits.md](durable-memory/03-physics-and-limits.md); schema:

@@ -24,6 +24,16 @@ Every test asserts a closed form or a published value, not a number taken from t
 - **Pulse height** (`tests/pulse_height.lms`): no counts above the Compton edge 2E2/(m+2E) = 0.4773 MeV for a thin
   target; the photopeak holds 93% of a large NaI crystal's pulses.
 - **Reproducibility** (`tests/determinism.lms`, test.sh rerun): identical bits for the same seed, different for another.
+- **Curved regions and extended sources** (`tests/curved.lms`, `tests/core.cpp`): sphere chords 2R, 1.6R (impact
+  0.6R), a miss, and R from an isotropic source at the center; cylinder along the axis, across the axis, at impact
+  0.3R and a miss; a sphere inside a box with priority; a 30-degree cone on a sphere subtending 10 degrees hits
+  (1 - cos 10)/(1 - cos 30) = 0.1127; a disc of radius 1 onto a 1x1 plate hits 1/pi; bone and PMMA mass
+  attenuation at 100 keV (0.1855, 0.1641 cm2/g); the rotation's deflection angle to 1e-9 rad within 1e-5 rad of the
+  z axis; 200 grazing exits (1e-12 rad to a low face) terminate.
+- **Implicit capture** (`tests/variance.lms`, `tests/core.cpp`): four lead layers at 300 keV: uncollided transmission
+  exp(-mu x), deposits and crossings equal to analog within 4 combined errors, smaller errors in the last layer
+  and on the exit plane; the first-collision deposit is > 90% of the deposit of a 10 um film; tracks start at the
+  source with non-increasing energy; a two-row user table interpolates log-log (0.03254 cm2/g at 1 MeV).
 
 Tolerances are 4 standard errors (statistical) or the table precision (4 digits). A failing case prints both
 numbers.

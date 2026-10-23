@@ -27,6 +27,10 @@ struct Element {
 };
 const Element &element(const std::string &symbol);  // throws on an unknown symbol
 std::vector<std::string> element_symbols();
+// Add (or replace) an element from a user table: lines of "energy_MeV coherent incoherent photoelectric
+// pair_nuclear pair_electron" in cm2/g, energies ascending (an absorption edge is a repeated energy), as in
+// data/xcom.csv and NIST XCOM output. Throws on malformed text.
+void add_element(const std::string &symbol, int z, const std::string &text);
 
 // A material with its attenuation tables on the union of its elements' energy grids (linear, 1/cm).
 class Material {

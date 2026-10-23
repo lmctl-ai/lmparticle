@@ -62,6 +62,39 @@ const Element &element(const std::string &symbol) {
   return it->second;
 }
 
+void add_element(const std::string &symbol, int z, const std::string &text) {
+  if (symbol.empty() || symbol.size() > 3) throw std::runtime_error("element table: symbol must be 1-3 characters");
+  if (z < 1 || z > 118) throw std::runtime_error("element table: Z must be 1..118");
+  Element x;
+  x.z = z;
+  x.symbol = symbol;
+  std::istringstream in(text);
+  std::string line;
+  int n = 0;
+  while (std::getline(in, line)) {
+    n++;
+    size_t first = line.find_first_not_of(" \t\r");
+    if (first == std::string::npos || line[first] == '#') continue;
+    std::replace(line.begin(), line.end(), ',', ' ');
+    std::istringstream ls(line);
+    double e, c, i, p, pn, pe;
+    std::string extra;
+    if (!(ls >> e >> c >> i >> p >> pn >> pe) || (ls >> extra))
+      throw std::runtime_error("element table: line " + std::to_string(n) + " must hold 6 numbers (E coherent incoherent photo pair_nuclear pair_electron): " + line);
+    for (double v : {e, c, i, p, pn, pe})
+      if (!std::isfinite(v) || v < 0) throw std::runtime_error("element table: line " + std::to_string(n) + " has a negative or nonfinite value");
+    if (e <= 0) throw std::runtime_error("element table: line " + std::to_string(n) + ": energy must be positive (MeV)");
+    if (!x.energy.empty() && e < x.energy.back()) throw std::runtime_error("element table: line " + std::to_string(n) + ": energies must be ascending");
+    if (c + i + p + pn + pe <= 0) throw std::runtime_error("element table: line " + std::to_string(n) + ": all coefficients are zero");
+    x.energy.push_back(e);
+    x.mass_coeff.push_back({c, i, p, pn + pe});
+  }
+  if (x.energy.size() < 2) throw std::runtime_error("element table: at least two rows are needed");
+  if (x.energy.front() > kMinEnergy || x.energy.back() < kMaxEnergy)
+    throw std::runtime_error("element table: the energies must cover 0.001 to 20 MeV (first row at or below 0.001, last at or above 20)");
+  table()[symbol] = std::move(x);
+}
+
 std::vector<std::string> element_symbols() {
   std::vector<std::pair<int, std::string>> v;
   for (const auto &kv : table()) v.emplace_back(kv.second.z, kv.first);
@@ -135,7 +168,7 @@ int Material::pick_rayleigh_element(double e, double u) const {
 
 std::vector<std::string> builtin_names() {
   return {"water", "air", "lead", "iron", "aluminum", "copper", "tungsten", "silicon", "germanium", "concrete", "nai",
-          "polyethylene", "tissue"};
+          "polyethylene", "tissue", "bone", "pmma"};
 }
 
 std::shared_ptr<const Material> builtin_material(const std::string &n) {
@@ -153,6 +186,11 @@ std::shared_ptr<const Material> builtin_material(const std::string &n) {
   if (n == "nai") return mk(3.667, {{"Na", 0.153373}, {"I", 0.846627}});
   if (n == "polyethylene") return mk(0.94, {{"H", 0.143711}, {"C", 0.856289}});
   if (n == "tissue") return mk(1.0, {{"H", 0.101174}, {"C", 0.111000}, {"N", 0.026000}, {"O", 0.761826}});
+  // ICRU-44 cortical bone and PMMA (acrylic), compositions as in the NIST XCOM/ESTAR material lists
+  if (n == "bone")
+    return mk(1.92, {{"H", 0.034000}, {"C", 0.155000}, {"N", 0.042000}, {"O", 0.435000}, {"Na", 0.001000}, {"Mg", 0.002000},
+                     {"P", 0.103000}, {"S", 0.003000}, {"Ca", 0.225000}});
+  if (n == "pmma") return mk(1.19, {{"H", 0.080538}, {"C", 0.599848}, {"O", 0.319616}});
   if (n == "concrete")
     return mk(2.3, {{"H", 0.022100}, {"C", 0.002484}, {"O", 0.574930}, {"Na", 0.015208}, {"Mg", 0.001266}, {"Al", 0.019953},
                     {"Si", 0.304627}, {"K", 0.010045}, {"Ca", 0.042951}, {"Fe", 0.006435}});

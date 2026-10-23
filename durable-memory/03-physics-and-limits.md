@@ -27,16 +27,39 @@ bremsstrahlung photons. Good for attenuation, shielding, buildup, energy-balance
 questions with photons from tens of keV to a few MeV in low to medium Z; unsuitable for dose in thin layers
 of high Z, charged-particle ranges, or radiotherapy dosimetry.
 
-**Geometry**: a list of axis-aligned boxes; `slab` is a box infinite in x and y. Earlier boxes win where they
-overlap (the distance to the next boundary includes entering any higher-priority box). Outside all boxes is
-vacuum: photons travel on, and leave for good when no box lies ahead. After a boundary the photon is nudged 1e-8 cm
-into the next region. No curved surfaces, no rotations.
+**Geometry**: a list of regions: axis-aligned boxes (`slab` is a box infinite in x and y), spheres and cylinders
+with their axis along z. Earlier regions win where they overlap (the distance to the next boundary includes
+entering any higher-priority region). Outside all regions is vacuum: photons travel on, and leave for good when no
+region lies ahead. After reaching a surface the photon is placed 1e-8 cm across it: for a planar face the hit
+coordinate is snapped to the face and pushed across along that axis, for a curved surface the radius is set to
+R ± 1e-8. (A push along the flight direction alone was lost to rounding at grazing angles on an inclusive low face,
+and such a history then looped until the 1e8-step guard; `tests/core.cpp` runs 200 grazing exits.) No rotated boxes,
+no cylinders along x or y.
+
+**Sources**: point or disc (uniform over a disc perpendicular to the beam axis, or to z when isotropic); direction
+isotropic, pencil beam, or uniform in solid angle within a cone of a given half-angle.
+
+**Variance reduction** (`Sim.implicit_capture(w)`): at every collision the photoelectric share mu_photo/mu_total
+of the weight is deposited and the photon continues with the rest, choosing among Rayleigh, Compton and pair; below
+weight `w` Russian roulette kills half and doubles the other half. Tallies are weighted. Means are unchanged,
+errors deep in a shield are smaller; energy is conserved only in expectation; pulse-height tallies are refused
+(a weighted per-history deposit is not a pulse height).
+
+**Direction change**: the deflection is applied with the standard rotation about the current direction; the
+transverse length q = sqrt(u^2 + v^2) is computed directly and only below 1e-10 is the z axis used instead, so
+the shortcut's direction error is at most 1e-10 rad (it used to be taken within 0.26 degrees of the axis).
 
 **Tallies** (all per source photon, with the standard error of the mean from per-history sums, so a history that
 contributes several times, e.g. two plane crossings, is handled correctly):
-region energy deposition; infinite-plane forward crossings (count, uncollided count, energy, spectrum); leakage
-(count, uncollided count, energy, spectrum); interactions by process; per-history pulse height in a region.
+region energy deposition (collision kerma: what electrons and positrons receive at the interaction points) and
+its first-collision part (deposited by photons that had not interacted before, whichever process; the ratio
+deposited / deposited_uncollided is the kerma buildup factor of the region); infinite-plane forward crossings
+(count, uncollided count, energy, spectrum); leakage (count, uncollided count, energy, spectrum); interactions by
+process; per-history pulse height in a region; optional track vertices of the first n histories.
 "Uncollided" means no interaction of any kind since birth; annihilation photons are always collided.
+
+**Random stream**: the Rayleigh angle and azimuth are drawn in a fixed order (two statements), not as two
+arguments of one call, because C++ leaves argument evaluation order to the compiler and GCC and Clang differ.
 
 **Reproducibility**: single thread; xoshiro256** seeded through splitmix64; one stream per run. Same program,
 same binary, same platform: identical bits. Across platforms the integer random stream is identical and only
