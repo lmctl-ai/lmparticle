@@ -138,6 +138,9 @@ analog transport, and bitwise reproducibility.
 
 ## Build
 
+[![CI](https://github.com/lmctl-ai/lmparticle/actions/workflows/ci.yml/badge.svg)](https://github.com/lmctl-ai/lmparticle/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 C++17 compiler, CMake 3.24; nothing else (no third-party sources).
 
 ```sh
