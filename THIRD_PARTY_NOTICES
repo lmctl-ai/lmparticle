@@ -4,7 +4,7 @@ Third-party notices for lmparticle
 ==================================
 
 lmparticle's own code (cpp/, schema/, scripts/, examples/, tests/; including the vendored `cpp/dslvm.hpp`
-runtime from the cpp-dsl-sdk project) is Copyright (c) 2026 Lattice Systems LLC, MIT license (see
+runtime from the lmcode-cpp project) is Copyright (c) 2026 Lattice Systems LLC, MIT license (see
 LICENSE). `lmparticle --notices` prints this file. There is no third-party source code in the binary.
 
 NIST XCOM photon cross-section data
