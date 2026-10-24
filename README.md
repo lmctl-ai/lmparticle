@@ -62,7 +62,7 @@ LMPARTICLE_TEST_NETWORK=1 examples/render-all.sh        # regenerate every docs/
 ```
 
 The `install=` bindings fetch released hosts (lmparticle, [lmplot](https://github.com/lmctl-ai/lmplot),
-[lmdraw](https://github.com/lmctl-ai/lmdraw), [lmcad](https://github.com/lmctl-ai/lmcad)); binaries on `PATH` take
+[lmdraw](https://github.com/lmctl-ai/lmdraw), [lmcad](https://github.com/lmctl-ai/lmcad); Linux binaries require dynamic glibc >= 2.35, Ubuntu 22.04+); binaries on `PATH` take
 priority. Every example runs from an empty working directory and writes its images under `docs/images/` there.
 GitHub rate-limits anonymous release lookups (60 per hour): export a `GITHUB_TOKEN` if `install` reports HTTP 403.
 
@@ -149,7 +149,7 @@ cmake -S . -B build && cmake --build build     # about 20 seconds
 ./test.sh                                      # needs lmscript on PATH
 ```
 
-Linux builds are fully static; macOS links only system libraries; Windows links the MinGW runtime
+Linux builds link `libstdc++`/`libgcc` statically and use only dynamic glibc (>= 2.35); macOS links only system libraries; Windows links the MinGW runtime
 statically. `lmparticle --notices` prints the XCOM citation and the licenses.
 
 ## Scope
