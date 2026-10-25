@@ -1,6 +1,6 @@
 # Pair production: threshold at 1.022 MeV, annihilation photons at 511 keV, and the process mix of the tables.
 out = ARGV.len() > 0 ? ARGV[0] : "build/pair_production.dslb";
-p = _dsl_ cli="lmparticle";
+p = _lmcode_ cli="lmparticle";
 let pb = rad.builtin("lead");
 let g = rad.geometry();
 g.slab("lead", pb, 0.0, 3.0);
@@ -31,5 +31,5 @@ let r4 = rad.simulation(film, s4).seed(4).run(2000000);
 rad.assert_close((r4.interactions("pair") / r4.interactions("compton")) / (pb.mu_partial(5.0, "pair") / pb.mu_partial(5.0, "compton")), 1.0, 0.1);
 # the energy still balances with pairs in play
 rad.assert_close(r2.total_deposited() + r2.escaped_energy(), 8.0, 0.000000001);
-end _dsl_
+end _lmcode_
 savedsl(p, out);

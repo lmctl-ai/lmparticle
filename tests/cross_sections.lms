@@ -1,6 +1,6 @@
 # Embedded NIST XCOM tables and the mixture rule, against published XCOM values (mass attenuation with coherent scattering, cm2/g).
 out = ARGV.len() > 0 ? ARGV[0] : "build/cross_sections.dslb";
-p = _dsl_ cli="lmparticle";
+p = _lmcode_ cli="lmparticle";
 let w = rad.builtin("water");
 rad.assert_close(w.mu_mass(0.01), 5.329, 0.002);
 rad.assert_close(w.mu_mass(0.1), 0.1707, 0.00005);
@@ -54,5 +54,5 @@ let hw = rad.material("built up", 1.0).element("H", 0.111894);
 rad.assert_true(hw.mu_mass(1.0) > 0.12);
 hw.element("O", 0.888106);
 rad.assert_close(hw.mu_mass(1.0), w.mu_mass(1.0), 0.0000001);
-end _dsl_
+end _lmcode_
 savedsl(p, out);

@@ -7,7 +7,7 @@
 # is larger than its exposure (air kerma) buildup factor; both stay well below water's.
 mkdir("build/visuals");
 mkdir("docs/images");
-compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+compute = _lmcode_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 let rows = "";
 for (m in range(0, 3)) {
   let mat = rad.builtin("water");
@@ -41,20 +41,20 @@ for (m in range(0, 3)) {
   rows = rows + "\n\n";
 }
 rad.save_text("build/visuals/buildup_factor.csv", rows);
-end _dsl_
+end _lmcode_
 savedsl(compute, "build/visuals/buildup_factor-compute.dslb");
 r = system ${dsl_cli(compute)} --dsl build/visuals/buildup_factor-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 print(r.stdout);
 write("build/visuals/buildup_published.csv", "1 2.08\n2 3.62\n");
-draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
 plot.png("docs/images/buildup_factor.png", 900, 560);
 plot.cmd("set title 'Buildup factor of a 1 MeV point isotropic source in an infinite medium (kerma in the medium itself)'");
 plot.cmd("set xlabel 'Depth (mean free paths)'; set ylabel 'Buildup factor B = total kerma / uncollided kerma'; set grid; set key top left; set xrange [0:7.5]; set yrange [1:*]");
 plot.cmd("set label 1 at 1.15,2.08 left 'ANS-6.4.3 water: 2.08' font ',9' tc rgb '#555555'; set label 2 at 2.15,3.62 left '3.62' font ',9' tc rgb '#555555'");
 plot.cmd("plot 'build/visuals/buildup_factor.csv' index 0 using 2:3:4 with yerrorlines pt 7 lw 2 lc rgb '#1f77b4' title 'water', '' index 1 using 2:3:4 with yerrorlines pt 5 lw 2 lc rgb '#7f7f7f' title 'iron', '' index 2 using 2:3:4 with yerrorlines pt 9 lw 2 lc rgb '#d62728' title 'lead', 'build/visuals/buildup_published.csv' using 1:2 with points pt 12 ps 2 lw 2 lc rgb '#333333' title 'published (water, exposure, ANS-6.4.3)'");
 plot.close();
-end _dsl_
+end _lmcode_
 savedsl(draw, "build/visuals/buildup_factor-draw.dslb");
 r = system ${dsl_cli(draw)} --dsl build/visuals/buildup_factor-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);

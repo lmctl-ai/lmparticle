@@ -68,7 +68,7 @@ GitHub rate-limits anonymous release lookups (60 per hour): export a `GITHUB_TOK
 
 ```
 # shield.lms: how much of a 662 keV (Cs-137) beam gets through 1 cm of lead without interacting?
-p = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+p = _lmcode_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 let pb = rad.builtin("lead");
 let g = rad.geometry();
 g.slab("shield", pb, 0.0, 1.0);                       # z from 0 to 1 cm, infinite sideways
@@ -77,7 +77,7 @@ s.point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(0.662);
 let r = rad.simulation(g, s).plane("exit", "z", 1.0).seed(1).run(200000);
 rad.print("uncollided " + str(r.plane_uncollided("exit")) + " +- " + str(r.plane_uncollided_err("exit")));
 rad.assert_close(r.plane_uncollided("exit"), pow(2.718281828459045, -pb.mu(0.662)), 0.005);   # exp(-mu x)
-end _dsl_
+end _lmcode_
 savedsl(p, "shield.dslb");
 system ${dsl_cli(p)} --dsl shield.dslb;
 ```

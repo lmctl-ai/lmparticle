@@ -1,6 +1,6 @@
 # Energy bookkeeping: what is deposited plus what leaves equals what was emitted, in every geometry and at every energy.
 out = ARGV.len() > 0 ? ARGV[0] : "build/conservation.dslb";
-p = _dsl_ cli="lmparticle";
+p = _lmcode_ cli="lmparticle";
 let pb = rad.builtin("lead");
 let water = rad.builtin("water");
 let conc = rad.builtin("concrete");
@@ -52,5 +52,5 @@ rad.assert_close(r4.total_deposited() + r4.escaped_energy(), r4.source_energy(),
 let ra = rad.simulation(g3, s3).seed(1).run(100000);
 let rb2 = rad.simulation(g3, s3).seed(1).run(400000);
 rad.assert_close(rb2.deposited_err("film") / ra.deposited_err("film"), 0.5, 0.08);
-end _dsl_
+end _lmcode_
 savedsl(p, out);

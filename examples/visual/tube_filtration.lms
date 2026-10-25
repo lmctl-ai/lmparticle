@@ -4,7 +4,7 @@
 # beam becomes more penetrating (its half-value layer in aluminium grows), at the price of intensity.
 mkdir("build/visuals");
 mkdir("docs/images");
-compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+compute = _lmcode_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 let al = rad.builtin("aluminum");
 let cu = rad.builtin("copper");
 let s = rad.source().point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0);
@@ -40,7 +40,7 @@ for (k in range(0, 3)) {
   rows = rows + str(k) + " " + str(n) + " " + str(mean * 1000.0) + " " + str(hvl * 10.0) + "\n";
 }
 rad.save_text("build/visuals/tube_summary.csv", rows);
-end _dsl_
+end _lmcode_
 savedsl(compute, "build/visuals/tube_filtration-compute.dslb");
 r = system ${dsl_cli(compute)} --dsl build/visuals/tube_filtration-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
@@ -52,13 +52,13 @@ assert(num(summ[2][3]) > num(summ[1][3]) && num(summ[1][3]) > num(summ[0][3]), "
 assert(num(summ[1][3]) > 1.5 && num(summ[1][3]) < 6.0, "HVL of a 2.5 mm Al filtered 100 kVp beam is a few mm Al");
 function tag(k, name) { return name + " (" + str(round(num(summ[k][1]) * 100)) + "% of photons, mean " + str(round(num(summ[k][2]))) + " keV, HVL " + str(round(num(summ[k][3]) * 10) / 10) + " mm Al)"; }
 t0 = tag(0, "no filter"); t1 = tag(1, "2.5 mm Al"); t2 = tag(2, "2.5 mm Al + 0.2 mm Cu");
-draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
 plot.png("docs/images/tube_filtration.png", 900, 560);
 plot.cmd("set title '100 kVp tube spectrum (Kramers) after filtration: fewer, harder photons'");
 plot.cmd("set xlabel 'Photon energy (keV)'; set ylabel 'Transmitted photons per source photon per 5 keV bin'; set label 9 at graph 0.98, graph 0.72 right 'HVL = aluminium halving the photon count (no inherent filtration, no K lines)' font ',9' tc rgb '#555555'; set grid; set key top right; set xrange [0:100]; set yrange [0:*]");
 plot.cmd("plot 'build/visuals/tube_0.csv' using (($1+$2)*500):3 with boxes fs solid 0.35 lc rgb '#999999' title '" + ${t0} + "', 'build/visuals/tube_1.csv' using (($1+$2)*500):3 with boxes fs solid 0.5 lc rgb '#1f77b4' title '" + ${t1} + "', 'build/visuals/tube_2.csv' using (($1+$2)*500):3 with boxes fs solid 0.7 lc rgb '#d62728' title '" + ${t2} + "'");
 plot.close();
-end _dsl_
+end _lmcode_
 savedsl(draw, "build/visuals/tube_filtration-draw.dslb");
 r = system ${dsl_cli(draw)} --dsl build/visuals/tube_filtration-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);

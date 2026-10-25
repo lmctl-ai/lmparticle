@@ -1,6 +1,6 @@
 # Narrow-beam attenuation: the uncollided transmission through matter is exp(-mu x), whatever the layers and geometry.
 out = ARGV.len() > 0 ? ARGV[0] : "build/attenuation.dslb";
-p = _dsl_ cli="lmparticle";
+p = _lmcode_ cli="lmparticle";
 let e1 = 2.718281828459045;
 let pb = rad.builtin("lead");
 let water = rad.builtin("water");
@@ -76,5 +76,5 @@ s7.point(0.0, 0.0, 10.0).beam(0.0, 0.0, -1.0).energy(1.0);
 let r8 = rad.simulation(g2, s7).plane("back", "z", 0.0).seed(18).run(100000);
 rad.assert_true(abs(r8.escaped_uncollided() - pow(e1, -10.0 * water.mu(1.0))) < 4.0 * r8.escaped_uncollided_err());
 rad.assert_true(r8.total_deposited() > 0.1);
-end _dsl_
+end _lmcode_
 savedsl(p, out);

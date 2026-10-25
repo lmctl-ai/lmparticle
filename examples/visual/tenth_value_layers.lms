@@ -5,7 +5,7 @@
 # fields, lie between the two: lead 2.1 / 4.0 cm, concrete 17.5 / 20.6 cm (Cs-137 / Co-60).
 mkdir("build/visuals");
 mkdir("docs/images");
-compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+compute = _lmcode_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 let lead = rad.builtin("lead");
 let conc = rad.builtin("concrete");
 let cs = rad.source().point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(0.662);
@@ -40,7 +40,7 @@ for (m in range(0, 2)) {
   }
 }
 rad.save_text("build/visuals/tvl.csv", rows);
-end _dsl_
+end _lmcode_
 savedsl(compute, "build/visuals/tenth_value_layers-compute.dslb");
 r = system ${dsl_cli(compute)} --dsl build/visuals/tenth_value_layers-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
@@ -85,7 +85,7 @@ for (b in range(0, 4)) {
 }
 l = split(trim(labels), " ");
 
-draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
 plot.png("docs/images/tenth_value_layers.png", 900, 560);
 plot.cmd("set multiplot layout 1,2 title 'Tenth-value layers: narrow beam exp(-mu x) (dashed), infinite broad beam with buildup (points), NCRP 49 (triangles)' font ',11'");
 plot.cmd("set logscale y; set yrange [0.001:1]; set grid; set key top right; set ylabel 'Kerma behind the wall / kerma without wall'");
@@ -102,7 +102,7 @@ plot.cmd("set label 3 at 17.5,0.1 '' point pt 9 ps 2 lc rgb '#1f77b4'; set label
 plot.cmd("plot 'build/visuals/tvl.csv' index 2 using 3:4 with lines dt 2 lw 2 lc rgb '#1f77b4' title 'Cs-137 exp(-mu x)', '' index 2 using 3:5:6 with yerrorlines pt 7 lw 2 lc rgb '#1f77b4' title 'Cs-137 broad beam', '' index 3 using 3:4 with lines dt 2 lw 2 lc rgb '#d62728' title 'Co-60 exp(-mu x)', '' index 3 using 3:5:6 with yerrorlines pt 5 lw 2 lc rgb '#d62728' title 'Co-60 broad beam'");
 plot.cmd("unset multiplot");
 plot.close();
-end _dsl_
+end _lmcode_
 savedsl(draw, "build/visuals/tenth_value_layers-draw.dslb");
 r = system ${dsl_cli(draw)} --dsl build/visuals/tenth_value_layers-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);

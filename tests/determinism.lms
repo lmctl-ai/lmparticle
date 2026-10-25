@@ -1,6 +1,6 @@
 # Seeded runs are reproducible bit for bit; seeds and histories change the numbers; CSV outputs are written.
 out = ARGV.len() > 0 ? ARGV[0] : "build/determinism.dslb";
-p = _dsl_ cli="lmparticle";
+p = _lmcode_ cli="lmparticle";
 let water = rad.builtin("water");
 let g = rad.geometry();
 g.slab("w", water, 0.0, 5.0);
@@ -20,5 +20,5 @@ rad.assert_true(abs(a.deposited("w") - big.deposited("w")) < 5.0 * (a.deposited_
 a.save_regions("build/determinism_regions.csv");
 a.save_plane_spectrum("e", "build/determinism_spectrum.csv");
 a.save_leakage_spectrum("build/determinism_leak.csv");
-end _dsl_
+end _lmcode_
 savedsl(p, out);

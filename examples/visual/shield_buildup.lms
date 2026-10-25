@@ -2,7 +2,7 @@
 # Seeded radiation transport -> CSV -> lmplot PNG (and optional animation).
 mkdir("build/visuals");
 mkdir("docs/images");
-compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+compute = _lmcode_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 # Forward plane crossings include scattered photons; they are not a survival probability.
 let lead = rad.builtin("lead");
 let src = rad.source().point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(0.662);
@@ -19,11 +19,11 @@ for (i in range(0, 25)) {
   rows = rows + str(t)+" "+str(expected)+" "+str(u)+" "+str(err)+" "+str(result.plane_count("exit"))+"\n";
 }
 rad.save_text("build/visuals/shield_buildup.csv",rows);
-end _dsl_
+end _lmcode_
 savedsl(compute, "build/visuals/shield_buildup-compute.dslb");
 r = system ${dsl_cli(compute)} --dsl build/visuals/shield_buildup-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
-draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
 plot.png("docs/images/shield_buildup.png", 900, 560);
 plot.cmd("set grid; set key outside top center horizontal");
 plot.cmd("set title 'Scattered photons build up behind a lead shield'; set xlabel 'Lead thickness (cm)'; set ylabel 'Forward crossings per source photon'; set logscale y; set yrange [0.01:1.2]; set xrange [0:3]");
@@ -36,7 +36,7 @@ for (i in range(0, 25)) {
   plot.cmd("plot 'build/visuals/shield_buildup.csv' every ::0::"+str(i)+" using 1:2 with lines lw 2 title 'uncollided theory', '' every ::0::"+str(i)+" using 1:5 with linespoints lw 2 title 'all crossings MC'");
   plot.close();
 }
-end _dsl_
+end _lmcode_
 savedsl(draw, "build/visuals/shield_buildup-draw.dslb");
 r = system ${dsl_cli(draw)} --dsl build/visuals/shield_buildup-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);

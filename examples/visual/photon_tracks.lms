@@ -3,7 +3,7 @@
 # Lead: short paths, one or two scatters, then photoabsorption. Self-contained: lmctl autorun the raw URL.
 mkdir("build/visuals");
 mkdir("docs/images");
-compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+compute = _lmcode_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 let water = rad.builtin("water");
 let lead = rad.builtin("lead");
 let src = rad.source().point(0.0, 0.0, -1.0).beam(0.0, 0.0, 1.0).energy(0.662);
@@ -18,7 +18,7 @@ rad.assert_true(abs(rw.escaped_uncollided() - pow(2.718281828459045, -10.0 * wat
 rad.assert_true(abs(rl.escaped_uncollided() - pow(2.718281828459045, -2.0 * lead.mu(0.662))) < 4.0 * rl.escaped_uncollided_err());
 rad.assert_true(rw.track_points() > 120 && rl.track_points() > 120);
 rad.print("water: " + str(rw.interactions("compton")) + " Compton scatters per photon, lead: " + str(rl.interactions("compton")));
-end _dsl_
+end _lmcode_
 savedsl(compute, "build/visuals/photon_tracks-compute.dslb");
 r = system ${dsl_cli(compute)} --dsl build/visuals/photon_tracks-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
@@ -43,7 +43,7 @@ function to_blocks(src, dst, zmax) {
 to_blocks("build/visuals/tracks_water_raw.csv", "build/visuals/tracks_water.dat", 10.0);
 to_blocks("build/visuals/tracks_lead_raw.csv", "build/visuals/tracks_lead.dat", 2.0);
 
-draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
 plot.png("docs/images/photon_tracks.png", 900, 500);
 plot.cmd("set multiplot layout 1,2 title '662 keV photons, 60 histories each: line colour = photon energy (MeV), dots = Compton scatters' font ',11'");
 plot.cmd("set palette defined (0 '#2d004b', 0.15 '#3b4cc0', 0.3 '#1f77b4', 0.45 '#2ca02c', 0.55 '#ff7f0e', 0.662 '#d62728'); set cbrange [0:0.662]; set cbtics 0.2");
@@ -67,7 +67,7 @@ for (i in range(0, 30)) {
   plot.cmd("plot 'build/visuals/tracks_water.dat' index 0:" + str(2 * i + 1) + " using 1:2:3 with lines lc palette lw 1.6 notitle, '' index 0:" + str(2 * i + 1) + " using (stringcolumn(4) eq 'compton' ? $1 : 1/0):2 with points pt 7 ps 0.6 lc rgb '#333333' notitle");
   plot.close();
 }
-end _dsl_
+end _lmcode_
 savedsl(draw, "build/visuals/photon_tracks-draw.dslb");
 r = system ${dsl_cli(draw)} --dsl build/visuals/photon_tracks-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);

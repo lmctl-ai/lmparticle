@@ -3,7 +3,7 @@
 # Needs lmplot on PATH or installable; the PNG lands in build/examples/shielding_plot.png.
 mkdir("build/examples");
 mkdir("docs/images");
-sim = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+sim = _lmcode_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 
 let pb = rad.builtin("lead");
 let s = rad.source();
@@ -17,12 +17,12 @@ for (i in range(0, 20)) {
   rows = rows + str(t) + " " + str(pow(2.718281828459045, -pb.mu(0.662) * t)) + " " + str(r.plane_uncollided("exit")) + " " + str(r.plane_uncollided_err("exit")) + " " + str(r.plane_count("exit")) + "\n";
 }
 rad.save_text("build/examples/shielding_plot.csv", rows);
-end _dsl_
+end _lmcode_
 savedsl(sim, "build/shielding_plot-sim.dslb");
 r = system ${dsl_cli(sim)} --dsl build/shielding_plot-sim.dslb;
 assert(r.code == 0);
 
-draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
 plot.png("build/examples/shielding_plot.png", 900, 600);
 plot.cmd("set title 'Lead shielding of 662 keV photons (lmparticle Monte Carlo, drawn by lmplot)'");
 plot.cmd("set xlabel 'lead thickness [cm]'");
@@ -31,7 +31,7 @@ plot.cmd("set logscale y");
 plot.cmd("set key top right");
 plot.cmd("plot 'build/examples/shielding_plot.csv' using 1:2 with lines lw 2 title 'exp(-mu x)', '' using 1:3:4 with yerrorbars pt 7 title 'uncollided (MC)', '' using 1:5 with linespoints title 'all forward crossings'");
 plot.close();
-end _dsl_
+end _lmcode_
 savedsl(draw, "build/shielding_plot-draw.dslb");
 r = system ${dsl_cli(draw)} --dsl build/shielding_plot-draw.dslb;
 assert(r.code == 0);

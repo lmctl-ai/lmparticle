@@ -1,6 +1,6 @@
 # Klein-Nishina: total cross section (analytic), mean energy transfer (numerical integral) and the Compton sampler (Monte Carlo).
 out = ARGV.len() > 0 ? ARGV[0] : "build/klein_nishina.dslb";
-p = _dsl_ cli="lmparticle";
+p = _lmcode_ cli="lmparticle";
 # total cross section per electron in barn (1 barn = 1e-24 cm2): 0.2112 at 1 MeV, 0.2866 at 511 keV, 0.0517 at 10 MeV (XCOM free-electron values)
 let barn = 0.000000000000000000000001;
 rad.assert_close(rad.klein_nishina(1.0) / barn, 0.2112, 0.0001);
@@ -23,5 +23,5 @@ for (i in range(0, 5)) {
 # same seed, same samples; a different seed differs
 rad.assert_close(rad.sample_compton_mean(1.0, 1000, 5), rad.sample_compton_mean(1.0, 1000, 5), 0.0);
 rad.assert_true(rad.sample_compton_mean(1.0, 1000, 5) != rad.sample_compton_mean(1.0, 1000, 6));
-end _dsl_
+end _lmcode_
 savedsl(p, out);

@@ -1,7 +1,7 @@
 # Curved regions and extended sources: sphere and cylinder chords give exp(-mu chord); a cone and a disc source
 # reach a black target in proportion to solid angle and area; the new builtin materials have XCOM values.
 out = ARGV.len() > 0 ? ARGV[0] : "build/curved.dslb";
-p = _dsl_ cli="lmparticle";
+p = _lmcode_ cli="lmparticle";
 let e1 = 2.718281828459045;
 let pb = rad.builtin("lead");
 let w = rad.builtin("tungsten");
@@ -88,5 +88,5 @@ let pmma = rad.builtin("pmma");
 rad.assert_close(bone.mu_mass(0.1), 0.1855, 0.002);
 rad.assert_close(pmma.mu_mass(0.1), 0.1641, 0.002);
 rad.assert_close(bone.density(), 1.92, 0.0);
-end _dsl_
+end _lmcode_
 savedsl(p, out);

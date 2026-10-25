@@ -6,7 +6,7 @@ mkdir("build/visuals");
 mkdir("build/rendered");
 mkdir("docs/images");
 mkdir("images");
-compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+compute = _lmcode_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 let lead = rad.builtin("lead");
 let air = rad.builtin("air");
 let tissue = rad.builtin("tissue");
@@ -34,24 +34,24 @@ for (variant in range(0, 2)) {
   }
 }
 rad.save_text("build/visuals/streaming.csv", rows);
-end _dsl_
+end _lmcode_
 savedsl(compute, "build/visuals/streaming_gap-compute.dslb");
 r = system ${dsl_cli(compute)} --dsl build/visuals/streaming_gap-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
-draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
 plot.png("docs/images/streaming_gap.png", 900, 560);
 plot.cmd("set title 'Streaming through a 4 mm slit in a 4 cm lead wall, broad 662 keV beam: kerma behind the wall'");
 plot.cmd("set xlabel 'Position across the wall (cm)'; set ylabel 'Kerma per source photon (MeV, 5 mm cell)'; set logscale y; set grid; set key top right; set xrange [-6.3:6.3]");
 plot.cmd("set object 1 rect from -0.2,graph 0 to 0.2,graph 1 fc rgb '#e0f0ff' fs solid noborder behind; set label 1 at 0,graph 0.95 center 'slit' tc rgb '#1f77b4'");
 plot.cmd("plot 'build/visuals/streaming.csv' index 0 using 2:3:4 with yerrorlines pt 7 lw 2 lc rgb '#d62728' title 'wall with slit', '' index 1 using 2:3:4 with yerrorlines pt 5 lw 2 lc rgb '#7f7f7f' title 'solid wall'");
 plot.close();
-end _dsl_
+end _lmcode_
 savedsl(draw, "build/visuals/streaming_gap-draw.dslb");
 r = system ${dsl_cli(draw)} --dsl build/visuals/streaming_gap-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 println("wrote docs/images/streaming_gap.png");
 
-sketch = _dsl_ cli="lmdraw" install="github:lmctl-ai/lmdraw@latest";
+sketch = _lmcode_ cli="lmdraw" install="github:lmctl-ai/lmdraw@latest";
 scene.canvas(900, 400, "#ffffff");
 scene.text(230.0, 36.0, 20.0, "Slit in a lead wall: side view, 50 px per cm", "#222222");
 scene.rect(150.0, 150.0, 290.0, 200.0, "#9a9a9a").set_attr("stroke", "#555555").set_attr("stroke-width", "1.5");
@@ -71,7 +71,7 @@ scene.text(150.0, 385.0, 13.0, "25 tissue cells, 5 mm each, 1 cm deep", "#7a4a2a
 scene.text(770.0, 250.0, 13.0, "x", "#555555");
 scene.arrow(760.0, 250.0, 820.0, 250.0, "#555555", 1.5);
 scene.render_png("build/rendered/streaming_layout.png", 900, 400, 1);
-end _dsl_
+end _lmcode_
 savedsl(sketch, "build/visuals/streaming_gap-sketch.dslb");
 r = system ${dsl_cli(sketch)} --dsl build/visuals/streaming_gap-sketch.dslb;
 assert(r.code == 0, r.stdout + r.stderr);

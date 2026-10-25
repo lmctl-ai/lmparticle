@@ -1,6 +1,6 @@
 # Pulse-height spectra: the Compton edge of a thin target, the full-energy peak of a large detector, and conservation of histories.
 out = ARGV.len() > 0 ? ARGV[0] : "build/pulse_height.dslb";
-p = _dsl_ cli="lmparticle";
+p = _lmcode_ cli="lmparticle";
 let water = rad.builtin("water");
 let nai = rad.builtin("nai");
 # 662 keV on a thin water film: single Compton scatters; the electron gets at most 2E^2/(m + 2E) = 0.4773 MeV (the Compton edge)
@@ -28,5 +28,5 @@ rad.assert_true(peak > 0.85 && peak < 0.97);
 # every history in the crystal deposits something or the photon missed it (it did not: the beam is on axis)
 rad.assert_true(r2.pulse_fraction("crystal", 0.0, 0.7) > 0.99);
 r2.save_pulse_height("crystal", "build/pulse_height_crystal.csv");
-end _dsl_
+end _lmcode_
 savedsl(p, out);

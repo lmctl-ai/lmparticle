@@ -6,7 +6,7 @@ mkdir("build/visuals");
 mkdir("build/rendered");
 mkdir("docs/images");
 mkdir("images");
-compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+compute = _lmcode_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 let nai = rad.builtin("nai");
 let lead = rad.builtin("lead");
 let s = rad.source().point(0.0, 0.0, 0.0).isotropic().energy(0.662);
@@ -23,11 +23,11 @@ rad.print("160-210 keV window: " + str(wa) + " bare, " + str(wb) + " with lead b
 rad.assert_true(wb > 1.2 * wa);
 rad.assert_true(abs(ra.pulse_fraction("crystal", 0.655, 0.67) - rb.pulse_fraction("crystal", 0.655, 0.67)) < 0.1 * ra.pulse_fraction("crystal", 0.655, 0.67));
 rad.print("160-210 keV window: " + str(wa) + " bare, " + str(wb) + " with lead behind the source");
-end _dsl_
+end _lmcode_
 savedsl(compute, "build/visuals/backscatter_peak-compute.dslb");
 r = system ${dsl_cli(compute)} --dsl build/visuals/backscatter_peak-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
-draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
 plot.png("docs/images/backscatter_peak.png", 900, 560);
 plot.cmd("set title 'Cs-137 pulse-height spectrum of a 3 x 3 inch NaI crystal, source 5 cm from the face'");
 plot.cmd("set xlabel 'Deposited energy (MeV)'; set ylabel 'Counts per emitted photon per 5 keV bin'; set logscale y; set yrange [0.000002:0.05]; set xrange [0:0.7]; set grid; set key top left");
@@ -36,14 +36,14 @@ plot.cmd("set arrow 2 from 0.477,0.004 to 0.477,0.0012 lc rgb '#333333' lw 2; se
 plot.cmd("set label 3 at 0.63,0.02 right 'photopeak 662 keV'");
 plot.cmd("plot 'build/visuals/backscatter_bare.csv' using (($1+$2)/2):3 with histeps lw 2 lc rgb '#1f77b4' title 'source in free space', 'build/visuals/backscatter_lead.csv' using (($1+$2)/2):3 with histeps lw 2 lc rgb '#d62728' title '3 cm lead block behind the source'");
 plot.close();
-end _dsl_
+end _lmcode_
 savedsl(draw, "build/visuals/backscatter_peak-draw.dslb");
 r = system ${dsl_cli(draw)} --dsl build/visuals/backscatter_peak-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 println("wrote docs/images/backscatter_peak.png");
 
 # schematic: source, crystal, lead bench, and the two scatter paths (drawn to scale, 30 px per cm)
-sketch = _dsl_ cli="lmdraw" install="github:lmctl-ai/lmdraw@latest";
+sketch = _lmcode_ cli="lmdraw" install="github:lmctl-ai/lmdraw@latest";
 scene.canvas(900, 420, "#ffffff");
 scene.rect(150.0, 60.0, 90.0, 300.0, "#9a9a9a").set_attr("stroke", "#555555").set_attr("stroke-width", "1.5");
 scene.text(160.0, 390.0, 15.0, "lead block (3 cm)", "#333333");
@@ -66,7 +66,7 @@ scene.text(300.0, 40.0, 20.0, "How the backscatter peak and the Compton edge ari
 scene.line(700.0, 380.0, 790.0, 380.0, "#555555", 2.0);
 scene.text(700.0, 400.0, 12.0, "3 cm", "#555555");
 scene.render_png("build/rendered/backscatter_geometry.png", 900, 420, 1);
-end _dsl_
+end _lmcode_
 savedsl(sketch, "build/visuals/backscatter_peak-sketch.dslb");
 r = system ${dsl_cli(sketch)} --dsl build/visuals/backscatter_peak-sketch.dslb;
 assert(r.code == 0, r.stdout + r.stderr);

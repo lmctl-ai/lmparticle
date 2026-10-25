@@ -5,7 +5,7 @@
 # with different seeds matches the reported error.
 mkdir("build/visuals");
 mkdir("docs/images");
-compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+compute = _lmcode_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 let lead = rad.builtin("lead");
 let tissue = rad.builtin("tissue");
 let t = 5.0 * lead.hvl(0.662);
@@ -37,7 +37,7 @@ for (mode in range(0, 2)) {
   rows = rows + "\n\n";
 }
 rad.save_text("build/visuals/convergence.csv", rows);
-end _dsl_
+end _lmcode_
 savedsl(compute, "build/visuals/convergence-compute.dslb");
 r = system ${dsl_cli(compute)} --dsl build/visuals/convergence-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
@@ -58,7 +58,7 @@ println(f"kerma behind 5 HVL of lead: analog {a} +- {ea}, implicit capture {ia} 
 assert(abs(a - ia) < 4.0 * (ea + ei), "both estimators agree");
 assert(ei < ea, "implicit capture reduces the error");
 gain = round((ea / ei) * (ea / ei) * 10) / 10;
-draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
 plot.png("docs/images/convergence.png", 900, 560);
 plot.cmd("set multiplot layout 1,2 title 'Kerma behind 5 half-value layers of lead (Cs-137): Monte Carlo convergence' font ',12'");
 plot.cmd("set logscale xy; set grid; set xlabel 'Histories N'; set key bottom left; set format y '%.0e'; set xrange [600:1500000]");
@@ -68,7 +68,7 @@ plot.cmd("unset logscale y; set format y '%.1e'; set title 'Estimates with error
 plot.cmd("plot 'build/visuals/convergence.csv' index 0 using ($2*0.9):3:4 with yerrorbars pt 7 lc rgb '#1f77b4' title 'analog', '' index 1 using ($2*1.1):3:4 with yerrorbars pt 5 lc rgb '#d62728' title 'implicit capture'");
 plot.cmd("unset multiplot");
 plot.close();
-end _dsl_
+end _lmcode_
 savedsl(draw, "build/visuals/convergence-draw.dslb");
 r = system ${dsl_cli(draw)} --dsl build/visuals/convergence-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);

@@ -1,7 +1,7 @@
 # Implicit capture with Russian roulette gives the analog means with smaller errors deep in a shield; first-collision
 # deposits; photon tracks; a user element table.
 out = ARGV.len() > 0 ? ARGV[0] : "build/variance.dslb";
-p = _dsl_ cli="lmparticle";
+p = _lmcode_ cli="lmparticle";
 let e1 = 2.718281828459045;
 let pb = rad.builtin("lead");
 # four 0.5 cm lead layers at 300 keV (photoabsorption dominates)
@@ -38,5 +38,5 @@ rad.assert_close(t0.deposited("L0"), t.deposited("L0"), 0.0);
 rad.element_table("Xq", 50, "0.001 1.0 0.1 100.0 0 0\n20.0 0.0001 0.01 0.001 0.02 0.001\n");
 let xq = rad.material("xq", 2.0).element("Xq", 1.0);
 rad.assert_close(xq.mu_partial(1.0, "photo"), 2.0 * 0.0325434, 0.0001);
-end _dsl_
+end _lmcode_
 savedsl(p, out);

@@ -2,7 +2,7 @@
 # Seeded radiation transport -> CSV -> lmplot PNG (and optional animation).
 mkdir("build/visuals");
 mkdir("docs/images");
-compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+compute = _lmcode_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 # Reversing layers leaves uncollided attenuation unchanged, but redistributes energy deposition.
 let pb = rad.builtin("lead");
 let al = rad.builtin("aluminum");
@@ -17,18 +17,18 @@ rad.assert_true(abs(rb.plane_uncollided("out")-expected)<6.0*rb.plane_uncollided
 rad.assert_close(ra.total_deposited()+ra.escaped_energy(),0.662,0.000000001);
 rad.assert_close(rb.total_deposited()+rb.escaped_energy(),0.662,0.000000001);
 rad.save_text("build/visuals/layer_order.csv","1 "+str(ra.deposited("lead"))+" "+str(ra.deposited("aluminum"))+"\n2 "+str(rb.deposited("lead"))+" "+str(rb.deposited("aluminum"))+"\n");
-end _dsl_
+end _lmcode_
 savedsl(compute, "build/visuals/layer_order-compute.dslb");
 r = system ${dsl_cli(compute)} --dsl build/visuals/layer_order-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
-draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
 plot.png("docs/images/layer_order.png", 900, 560);
 plot.cmd("set grid; set key outside top center horizontal");
 plot.cmd("set title 'Layer order redistributes absorbed photon energy'; set ylabel 'Deposited energy (MeV / source photon)'; set xrange [0.4:2.6]; set xtics ('lead then aluminum' 1, 'aluminum then lead' 2); set boxwidth 0.25; set style fill solid 0.75; set yrange [0:*]");
 plot.cmd("plot 'build/visuals/layer_order.csv' using ($1-0.14):2 with boxes lc rgb '#d95f02' title 'lead (0.5 cm)', '' using ($1+0.14):3 with boxes lc rgb '#1f77b4' title 'aluminum (2 cm)'");
 plot.close();
 
-end _dsl_
+end _lmcode_
 savedsl(draw, "build/visuals/layer_order-draw.dslb");
 r = system ${dsl_cli(draw)} --dsl build/visuals/layer_order-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);

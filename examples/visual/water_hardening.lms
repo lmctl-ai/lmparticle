@@ -2,7 +2,7 @@
 # Seeded radiation transport -> CSV -> lmplot PNG (and optional animation).
 mkdir("build/visuals");
 mkdir("docs/images");
-compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+compute = _lmcode_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 # Separate monochromatic probes isolate how water preferentially removes soft photons.
 let water = rad.builtin("water");
 let rows = "";
@@ -17,18 +17,18 @@ for (i in range(0, 21)) {
   rows=rows+str(t)+" "+str(a.plane_uncollided("out"))+" "+str(b.plane_uncollided("out"))+" "+str(pow(2.718281828459045, -water.mu(0.08)*t))+" "+str(pow(2.718281828459045, -water.mu(0.662)*t))+"\n";
 }
 rad.save_text("build/visuals/water_hardening.csv",rows);
-end _dsl_
+end _lmcode_
 savedsl(compute, "build/visuals/water_hardening-compute.dslb");
 r = system ${dsl_cli(compute)} --dsl build/visuals/water_hardening-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
-draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
 plot.png("docs/images/water_hardening.png", 900, 560);
 plot.cmd("set grid; set key outside top center horizontal");
 plot.cmd("set title 'Water preferentially attenuates the softer beam'; set xlabel 'Water thickness (cm)'; set ylabel 'Uncollided transmission'; set logscale y");
 plot.cmd("plot 'build/visuals/water_hardening.csv' using 1:4 with lines lw 2 lc rgb '#1f77b4' title '80 keV theory', '' using 1:2 with points pt 7 lc rgb '#1f77b4' title 'MC', '' using 1:5 with lines lw 2 lc rgb '#d95f02' title '662 keV theory', '' using 1:3 with points pt 5 lc rgb '#d95f02' title 'MC'");
 plot.close();
 
-end _dsl_
+end _lmcode_
 savedsl(draw, "build/visuals/water_hardening-draw.dslb");
 r = system ${dsl_cli(draw)} --dsl build/visuals/water_hardening-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);

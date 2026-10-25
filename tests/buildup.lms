@@ -1,6 +1,6 @@
 # Buildup: scattered photons add to the uncollided beam, more so in thick low-Z shields (counts of forward crossings of the exit plane).
 out = ARGV.len() > 0 ? ARGV[0] : "build/buildup.dslb";
-p = _dsl_ cli="lmparticle";
+p = _lmcode_ cli="lmparticle";
 let water = rad.builtin("water");
 let pb = rad.builtin("lead");
 let s = rad.source();
@@ -29,5 +29,5 @@ let rw = rad.simulation(gw, s2).plane("e", "z", 1.83 / water.mu(0.5)).seed(32).r
 rad.assert_true(rl.plane_count("e") / rl.plane_uncollided("e") < 0.8 * rw.plane_count("e") / rw.plane_uncollided("e"));
 # transmitted energy per crossing photon is below the source energy in the thick shield (degraded spectrum)
 rad.assert_true(rw.plane_energy("e") / rw.plane_count("e") < 0.5);
-end _dsl_
+end _lmcode_
 savedsl(p, out);

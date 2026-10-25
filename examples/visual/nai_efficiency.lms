@@ -4,7 +4,7 @@
 # Peak-to-total falls with energy as Compton scatters escape the crystal.
 mkdir("build/visuals");
 mkdir("docs/images");
-compute = _dsl_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
+compute = _lmcode_ cli="lmparticle" install="github:lmctl-ai/lmparticle@latest";
 let nai = rad.builtin("nai");
 let rows = "";
 let radius = 3.81;
@@ -29,11 +29,11 @@ for (i in range(0, 9)) {
 }
 rad.save_text("build/visuals/nai_efficiency.csv", rows);
 rad.print("solid-angle fraction of the face " + str(geo));
-end _dsl_
+end _lmcode_
 savedsl(compute, "build/visuals/nai_efficiency-compute.dslb");
 r = system ${dsl_cli(compute)} --dsl build/visuals/nai_efficiency-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
-draw = _dsl_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
+draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
 plot.png("docs/images/nai_efficiency.png", 900, 560);
 plot.cmd("set multiplot layout 1,2 title '3 x 3 inch NaI(Tl), point source 10 cm from the face'");
 plot.cmd("set logscale x; set grid; set xlabel 'Photon energy (MeV)'; set xrange [0.08:4]; set key top right");
@@ -43,7 +43,7 @@ plot.cmd("set title 'Peak-to-total ratio'; set ylabel 'Peak / total'; set yrange
 plot.cmd("plot 'build/visuals/nai_efficiency.csv' using 1:5 with linespoints pt 7 lw 2 lc rgb '#2ca02c' title 'Monte Carlo (no electron escape)'");
 plot.cmd("unset multiplot");
 plot.close();
-end _dsl_
+end _lmcode_
 savedsl(draw, "build/visuals/nai_efficiency-draw.dslb");
 r = system ${dsl_cli(draw)} --dsl build/visuals/nai_efficiency-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);

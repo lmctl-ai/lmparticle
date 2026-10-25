@@ -1,6 +1,6 @@
 # Geometry: ray-box tracking, region priority, solid angle of an isotropic source, boxes versus slabs.
 out = ARGV.len() > 0 ? ARGV[0] : "build/geometry.dslb";
-p = _dsl_ cli="lmparticle";
+p = _lmcode_ cli="lmparticle";
 let e1 = 2.718281828459045;
 let pb = rad.builtin("lead");
 let water = rad.builtin("water");
@@ -54,5 +54,5 @@ let s5 = rad.source();
 s5.point(0.0, 0.0, 7.0).beam(0.0, 0.0, 1.0).energy(0.5);
 let rc = rad.simulation(slab, s5).plane("e", "z", 8.0).seed(24).run(200000);
 rad.assert_true(abs(rc.plane_uncollided("e") - pow(e1, -water.mu(0.5))) < 4.0 * rc.plane_uncollided_err("e"));
-end _dsl_
+end _lmcode_
 savedsl(p, out);
