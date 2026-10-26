@@ -13,38 +13,38 @@ made by the example it links to; run the command under it from any empty directo
 | Tenth-value layers | Source in a lead pot | Streaming through a slit |
 | --- | --- | --- |
 | ![Tenth-value layers](docs/images/tenth_value_layers.png) | ![Kerma versus distance](docs/images/dose_rate_distance.png) | ![Streaming through a slit](docs/images/streaming_gap.png) |
-| [Narrow-beam tables understate the wall: buildup adds a third (lead) to two thirds (concrete)](examples/visual/tenth_value_layers.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/tenth_value_layers.lms` | [Inverse square times exp(-mu t), plus what scatters out of the lead and off the air](examples/visual/dose_rate_distance.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/dose_rate_distance.lms` | [A 4 mm slit in 4 cm of lead passes 50 times the kerma of the wall next to it](examples/visual/streaming_gap.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/streaming_gap.lms` |
+| [Narrow-beam tables understate the wall: buildup adds a third (lead) to two thirds (concrete)](examples/visual/tenth_value_layers.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/tenth_value_layers.lms` | [Inverse square times exp(-mu t), plus what scatters out of the lead and off the air](examples/visual/dose_rate_distance.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/dose_rate_distance.lms` | [A 4 mm slit in 4 cm of lead passes 50 times the kerma of the wall next to it](examples/visual/streaming_gap.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/streaming_gap.lms` |
 
 | Scatter buildup, 25 thicknesses | Slit geometry (lmdraw) | Layer order |
 | --- | --- | --- |
 | ![Scatter buildup](docs/images/shield-buildup.gif) | ![Slit layout](docs/images/streaming_layout.png) | ![Layer order energy deposition](docs/images/layer_order.png) |
-| [Uncollided photons follow exp(-mu x); all forward crossings do not](examples/visual/shield_buildup.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/shield_buildup.lms` | [The wall, the slit, the broad beam and the 25 detector cells, to scale](examples/visual/streaming_gap.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/streaming_gap.lms` | [Lead-then-aluminium and aluminium-then-lead transmit the same but absorb differently](examples/visual/layer_order.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/layer_order.lms` |
+| [Uncollided photons follow exp(-mu x); all forward crossings do not](examples/visual/shield_buildup.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/shield_buildup.lms` | [The wall, the slit, the broad beam and the 25 detector cells, to scale](examples/visual/streaming_gap.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/streaming_gap.lms` | [Lead-then-aluminium and aluminium-then-lead transmit the same but absorb differently](examples/visual/layer_order.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/layer_order.lms` |
 
 ### Detectors and spectra
 
 | NaI(Tl) efficiency | Backscatter peak | How the peaks arise (lmdraw) |
 | --- | --- | --- |
 | ![NaI efficiency](docs/images/nai_efficiency.png) | ![Backscatter peak](docs/images/backscatter_peak.png) | ![Backscatter geometry](docs/images/backscatter_geometry.png) |
-| [3 x 3 inch crystal at 10 cm: total and photopeak efficiency against solid angle x (1 - exp(-mu L))](examples/visual/nai_efficiency.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/nai_efficiency.lms` | [A lead block behind a Cs-137 source adds the 184 keV bump; the Compton edge stays at 477 keV](examples/visual/backscatter_peak.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/backscatter_peak.lms` | [The two 180-degree scatters that make the backscatter peak and the Compton edge](examples/visual/backscatter_peak.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/backscatter_peak.lms` |
+| [3 x 3 inch crystal at 10 cm: total and photopeak efficiency against solid angle x (1 - exp(-mu L))](examples/visual/nai_efficiency.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/nai_efficiency.lms` | [A lead block behind a Cs-137 source adds the 184 keV bump; the Compton edge stays at 477 keV](examples/visual/backscatter_peak.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/backscatter_peak.lms` | [The two 180-degree scatters that make the backscatter peak and the Compton edge](examples/visual/backscatter_peak.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/backscatter_peak.lms` |
 
 ### Imaging and dosimetry
 
 | Radiographic contrast | Phantom layout (lmdraw) | X-ray tube filtration |
 | --- | --- | --- |
 | ![Radiography contrast](docs/images/radiography_contrast.png) | ![Radiography layout](docs/images/radiography_layout.png) | ![Tube filtration](docs/images/tube_filtration.png) |
-| [2 cm of bone: 55% contrast at 60 keV, 27% at 120 keV, and scatter fog halves both](examples/visual/radiography_contrast.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/radiography_contrast.lms` | [Tissue block, bone rod, 25 pencil-beam positions and the detector plane](examples/visual/radiography_contrast.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/radiography_contrast.lms` | [2.5 mm Al and 0.2 mm Cu remove the soft photons: mean energy and HVL rise, intensity falls](examples/visual/tube_filtration.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/tube_filtration.lms` |
+| [2 cm of bone: 55% contrast at 60 keV, 27% at 120 keV, and scatter fog halves both](examples/visual/radiography_contrast.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/radiography_contrast.lms` | [Tissue block, bone rod, 25 pencil-beam positions and the detector plane](examples/visual/radiography_contrast.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/radiography_contrast.lms` | [2.5 mm Al and 0.2 mm Cu remove the soft photons: mean energy and HVL rise, intensity falls](examples/visual/tube_filtration.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/tube_filtration.lms` |
 
 ### Physics of photon interactions
 
 | Photon tracks | Which interaction dominates | Buildup factor |
 | --- | --- | --- |
 | ![Photon tracks](docs/images/photon_tracks.png) | ![Dominance map](docs/images/dominance_map.png) | ![Buildup factor](docs/images/buildup_factor.png) |
-| [60 recorded histories in water and in lead, coloured by energy](examples/visual/photon_tracks.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/photon_tracks.lms` | [Photoelectric, Compton and pair-production crossover energies for all 19 elements of the table](examples/visual/dominance_map.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/dominance_map.lms` | [Point source in water, iron, lead: 2.09 and 3.59 at 1 and 2 mfp against the published 2.08 and 3.62](examples/visual/buildup_factor.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/buildup_factor.lms` |
+| [60 recorded histories in water and in lead, coloured by energy](examples/visual/photon_tracks.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/photon_tracks.lms` | [Photoelectric, Compton and pair-production crossover energies for all 19 elements of the table](examples/visual/dominance_map.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/dominance_map.lms` | [Point source in water, iron, lead: 2.09 and 3.59 at 1 and 2 mfp against the published 2.08 and 3.62](examples/visual/buildup_factor.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/buildup_factor.lms` |
 
 | Tracks accumulating | Monte Carlo convergence | Water hardening |
 | --- | --- | --- |
 | ![Tracks animation](docs/images/photon-tracks.gif) | ![Convergence](docs/images/convergence.png) | ![Water hardening](docs/images/water_hardening.png) |
-| [662 keV photons entering water, two histories per frame](examples/visual/photon_tracks.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/photon_tracks.lms` | [Error falls as 1/sqrt(N); implicit capture needs fewer histories for the same error](examples/visual/convergence.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/convergence.lms` | [Water removes the 80 keV beam five times faster than the 662 keV beam](examples/visual/water_hardening.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/water_hardening.lms` |
+| [662 keV photons entering water, two histories per frame](examples/visual/photon_tracks.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/photon_tracks.lms` | [Error falls as 1/sqrt(N); implicit capture needs fewer histories for the same error](examples/visual/convergence.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/convergence.lms` | [Water removes the 80 keV beam five times faster than the 662 keV beam](examples/visual/water_hardening.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/water_hardening.lms` |
 
 The [complete gallery](docs/gallery.md) has all 25 examples with their pictures and commands, including
 material attenuation curves, half-value layers, Compton energy transfer, the NaI pulse-height spectrum, the
@@ -56,7 +56,7 @@ Install [lmctl](https://lmctl.com/tools/lmscript/skill.html) (it brings `lmscrip
 any command from the gallery, or run a local file:
 
 ```sh
-lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/backscatter_peak.lms
+lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/visual/backscatter_peak.lms
 lmscript examples/visual/backscatter_peak.lms           # from a checkout
 LMPARTICLE_TEST_NETWORK=1 examples/render-all.sh        # regenerate every docs/images file
 ```
@@ -128,11 +128,11 @@ compile-only use in `test.sh`:
 
 | Program | Shows |
 | --- | --- |
-| [shielding.lms](examples/shielding.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/shielding.lms` | Cs-137 through 0.25-3.25 cm of lead: the uncollided beam follows exp(-mu x), HVL and TVL |
-| [depth_dose.lms](examples/depth_dose.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/depth_dose.lms` | layer-by-layer kerma of a Co-60 beam in a 30 cm water phantom |
-| [detector_response.lms](examples/detector_response.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/detector_response.lms` | pulse-height spectrum of a NaI crystal: photopeak, Compton continuum and edge |
-| [pair_spectrum.lms](examples/pair_spectrum.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/pair_spectrum.lms` | what leaves lead after 6 MeV photons: pair production and the 511 keV line |
-| [combo/shielding_plot.lms](examples/combo/shielding_plot.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/combo/shielding_plot.lms`, [combo/detector_spectrum.lms](examples/combo/detector_spectrum.lms)<br>`lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/combo/detector_spectrum.lms` | lmparticle simulates, lmplot draws |
+| [shielding.lms](examples/shielding.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/shielding.lms` | Cs-137 through 0.25-3.25 cm of lead: the uncollided beam follows exp(-mu x), HVL and TVL |
+| [depth_dose.lms](examples/depth_dose.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/depth_dose.lms` | layer-by-layer kerma of a Co-60 beam in a 30 cm water phantom |
+| [detector_response.lms](examples/detector_response.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/detector_response.lms` | pulse-height spectrum of a NaI crystal: photopeak, Compton continuum and edge |
+| [pair_spectrum.lms](examples/pair_spectrum.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/pair_spectrum.lms` | what leaves lead after 6 MeV photons: pair production and the 511 keV line |
+| [combo/shielding_plot.lms](examples/combo/shielding_plot.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/combo/shielding_plot.lms`, [combo/detector_spectrum.lms](examples/combo/detector_spectrum.lms)<br>`lmctl https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/combo/detector_spectrum.lms` | lmparticle simulates, lmplot draws |
 
 `tests/` asserts known answers: XCOM published coefficients, the Klein-Nishina cross section and mean
 energy transfer, narrow-beam exp(-mu x) through layered, oblique, spherical and cylindrical geometries, the

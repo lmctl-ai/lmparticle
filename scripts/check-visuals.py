@@ -100,7 +100,7 @@ def check(root: Path) -> list[str]:
     if not 3 <= count <= 20:
         errors.append(f"README gallery must contain 3-20 images before first ## heading (found {count})")
     sources = re.findall(r"\((examples/[^)\s]+\.lms)\)", preamble)
-    autoruns = re.findall(r"lmctl autorun\s+\S+", preamble)
+    autoruns = re.findall(r"lmctl(?:\s+autorun)?\s+\S+\.lms", preamble)
     if len(sources) < count:
         errors.append(f"README gallery has {count} images but only {len(sources)} linked example sources")
     if len(autoruns) < count:
