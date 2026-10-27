@@ -50,6 +50,16 @@ The [complete gallery](docs/gallery.md) has all 25 examples with their pictures 
 material attenuation curves, half-value layers, Compton energy transfer, the NaI pulse-height spectrum, the
 pair-production spectrum of 6 MeV photons in lead, the Co-60 depth profile and the finite-shield render (lmcad).
 
+## Install lmctl
+
+Everything in this repository runs through [lmctl](https://lmctl.com), the core tool of the lmctl family. Install it once, then run any `.lms` file or raw URL:
+
+```bash
+npm install -g @lmctl-ai/lmctl
+lmctl autorun path/to/example.lms
+lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/example.lms
+```
+
 ## Install and run
 
 Install [lmctl](https://lmctl.com/tools/lmscript/skill.html) (it brings `lmscript` and `lmctl autorun`). Then copy
