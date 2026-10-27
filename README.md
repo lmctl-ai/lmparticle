@@ -56,8 +56,8 @@ Everything in this repository runs through [lmctl](https://lmctl.com), the core 
 
 ```bash
 npm install -g @lmctl-ai/lmctl
-lmctl autorun path/to/example.lms
-lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/example.lms
+lmctl autorun examples/depth_dose.lms
+lmctl autorun https://raw.githubusercontent.com/lmctl-ai/lmparticle/main/examples/depth_dose.lms
 ```
 
 ## Install and run
