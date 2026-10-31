@@ -31,7 +31,7 @@ rad.save_text("build/visuals/radiography.csv", rows);
 rad.print("primary bone contrast 60 keV " + str(1.0 - pow(2.718281828459045, -2.0 * (bone.mu(0.06) - tissue.mu(0.06)))) + ", 120 keV " + str(1.0 - pow(2.718281828459045, -2.0 * (bone.mu(0.12) - tissue.mu(0.12)))));
 end _lmcode_
 savedsl(compute, "build/visuals/radiography_contrast-compute.dslb");
-r = system ${dsl_cli(compute)} --dsl build/visuals/radiography_contrast-compute.dslb;
+r = system ${dsl_cli(compute)} --lmcode build/visuals/radiography_contrast-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 lines = read_lines("build/visuals/radiography.csv");
 blocks = [[], []];
@@ -61,7 +61,7 @@ plot.cmd("plot 'build/visuals/radiography.csv' index 0 using 2:3 with linespoint
 plot.close();
 end _lmcode_
 savedsl(draw, "build/visuals/radiography_contrast-draw.dslb");
-r = system ${dsl_cli(draw)} --dsl build/visuals/radiography_contrast-draw.dslb;
+r = system ${dsl_cli(draw)} --lmcode build/visuals/radiography_contrast-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 println("wrote docs/images/radiography_contrast.png");
 
@@ -91,7 +91,7 @@ scene.text(480.0, 412.0, 12.0, "10 cm", "#555555");
 scene.render_png("build/rendered/radiography_layout.png", 900, 420, 1);
 end _lmcode_
 savedsl(sketch, "build/visuals/radiography_contrast-sketch.dslb");
-r = system ${dsl_cli(sketch)} --dsl build/visuals/radiography_contrast-sketch.dslb;
+r = system ${dsl_cli(sketch)} --lmcode build/visuals/radiography_contrast-sketch.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 copy_file("build/rendered/radiography_layout.png", "docs/images/radiography_layout.png");
 println("wrote docs/images/radiography_layout.png");

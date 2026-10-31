@@ -2,7 +2,7 @@
 
 One context, `rad: Rad`. Object types: `Material`, `Geometry`, `Source`, `Sim`, `Result`.
 `schema/lmparticle.dsl.json` is generated from the `method(r, ...)` registrations in `cpp/main.cpp` by
-`scripts/gen-schema.py`; `test.sh` fails when it is stale and diffs it against `lmscript --dsl-signatures`.
+`scripts/gen-schema.py`; `test.sh` fails when it is stale and diffs it against `lmscript --lmcode-signatures`.
 
 Conventions: MeV, cm, g/cm3. Builder methods return the receiver (chain them); `Source.energy` replaces the
 spectrum, `Source.line` adds a weighted line (sampled per history). `Sim.run` may be called repeatedly (each call

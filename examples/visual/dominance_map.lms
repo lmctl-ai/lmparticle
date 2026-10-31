@@ -53,7 +53,7 @@ for (i in range(0, 19)) {
 rad.save_text("build/visuals/dominance.csv", rows);
 end _lmcode_
 savedsl(compute, "build/visuals/dominance_map-compute.dslb");
-r = system ${dsl_cli(compute)} --dsl build/visuals/dominance_map-compute.dslb;
+r = system ${dsl_cli(compute)} --lmcode build/visuals/dominance_map-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 # known crossovers: lead photo = Compton near 0.5 MeV, Compton = pair near 4.8 MeV; water (oxygen) photo = Compton near 25 keV
 vals = [];
@@ -73,6 +73,6 @@ plot.cmd("plot 'build/visuals/dominance.csv' using 1:2:(0.001) with filledcurves
 plot.close();
 end _lmcode_
 savedsl(draw, "build/visuals/dominance_map-draw.dslb");
-r = system ${dsl_cli(draw)} --dsl build/visuals/dominance_map-draw.dslb;
+r = system ${dsl_cli(draw)} --lmcode build/visuals/dominance_map-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 println("wrote docs/images/dominance_map.png");

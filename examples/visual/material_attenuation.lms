@@ -15,7 +15,7 @@ for (i in range(0, 20)) {
 rad.save_text("build/visuals/material_attenuation.csv", rows);
 end _lmcode_
 savedsl(compute, "build/visuals/material_attenuation-compute.dslb");
-r = system ${dsl_cli(compute)} --dsl build/visuals/material_attenuation-compute.dslb;
+r = system ${dsl_cli(compute)} --lmcode build/visuals/material_attenuation-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 
 draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
@@ -25,7 +25,7 @@ plot.cmd("plot 'build/visuals/material_attenuation.csv' every ::1 using 1:2 with
 plot.close();
 end _lmcode_
 savedsl(draw, "build/visuals/material_attenuation-draw.dslb");
-r = system ${dsl_cli(draw)} --dsl build/visuals/material_attenuation-draw.dslb;
+r = system ${dsl_cli(draw)} --lmcode build/visuals/material_attenuation-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 
 println("wrote docs/images/material_attenuation.png");

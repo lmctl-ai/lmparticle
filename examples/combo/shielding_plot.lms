@@ -19,7 +19,7 @@ for (i in range(0, 20)) {
 rad.save_text("build/examples/shielding_plot.csv", rows);
 end _lmcode_
 savedsl(sim, "build/shielding_plot-sim.dslb");
-r = system ${dsl_cli(sim)} --dsl build/shielding_plot-sim.dslb;
+r = system ${dsl_cli(sim)} --lmcode build/shielding_plot-sim.dslb;
 assert(r.code == 0);
 
 draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
@@ -33,7 +33,7 @@ plot.cmd("plot 'build/examples/shielding_plot.csv' using 1:2 with lines lw 2 tit
 plot.close();
 end _lmcode_
 savedsl(draw, "build/shielding_plot-draw.dslb");
-r = system ${dsl_cli(draw)} --dsl build/shielding_plot-draw.dslb;
+r = system ${dsl_cli(draw)} --lmcode build/shielding_plot-draw.dslb;
 assert(r.code == 0);
 println("wrote build/examples/shielding_plot.png");
 assert(copy_file("build/examples/shielding_plot.png", "docs/images/shielding_plot.png"));

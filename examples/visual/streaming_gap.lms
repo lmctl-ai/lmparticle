@@ -36,7 +36,7 @@ for (variant in range(0, 2)) {
 rad.save_text("build/visuals/streaming.csv", rows);
 end _lmcode_
 savedsl(compute, "build/visuals/streaming_gap-compute.dslb");
-r = system ${dsl_cli(compute)} --dsl build/visuals/streaming_gap-compute.dslb;
+r = system ${dsl_cli(compute)} --lmcode build/visuals/streaming_gap-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
 plot.png("docs/images/streaming_gap.png", 900, 560);
@@ -47,7 +47,7 @@ plot.cmd("plot 'build/visuals/streaming.csv' index 0 using 2:3:4 with yerrorline
 plot.close();
 end _lmcode_
 savedsl(draw, "build/visuals/streaming_gap-draw.dslb");
-r = system ${dsl_cli(draw)} --dsl build/visuals/streaming_gap-draw.dslb;
+r = system ${dsl_cli(draw)} --lmcode build/visuals/streaming_gap-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 println("wrote docs/images/streaming_gap.png");
 
@@ -73,7 +73,7 @@ scene.arrow(760.0, 250.0, 820.0, 250.0, "#555555", 1.5);
 scene.render_png("build/rendered/streaming_layout.png", 900, 400, 1);
 end _lmcode_
 savedsl(sketch, "build/visuals/streaming_gap-sketch.dslb");
-r = system ${dsl_cli(sketch)} --dsl build/visuals/streaming_gap-sketch.dslb;
+r = system ${dsl_cli(sketch)} --lmcode build/visuals/streaming_gap-sketch.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 copy_file("build/rendered/streaming_layout.png", "docs/images/streaming_layout.png");
 println("wrote docs/images/streaming_layout.png");

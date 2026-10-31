@@ -6,8 +6,8 @@ procedure `../../simulation/PROCEDURE.md`, feasibility `../../simulation/FEASIBI
 platform, ~100 MB binary) and asked for a reduced own Monte Carlo with embedded public cross sections.
 That is this project: no third-party source at all, one ~2.5 MB static executable, 20 s build.
 
-- **Scripting only**: `--dsl [--dry-run]`, `--version` (exactly `lmparticle X.Y.Z`), `--notices`,
-  `--dsl-schema [--json]`, `--dsl-signatures`; exit 2 usage, 3 load/run error. Context `rad: Rad`.
+- **Scripting only**: `--lmcode [--dry-run]`, `--version` (exactly `lmparticle X.Y.Z`), `--notices`,
+  `--lmcode-schema [--json]`, `--lmcode-signatures`; exit 2 usage, 3 load/run error. Context `rad: Rad`.
 - **Layout**: `cpp/xs.*` (XCOM tables, materials, Klein-Nishina), `cpp/transport.*` (RNG, geometry
   tracking, interactions, tallies), `cpp/main.cpp` (DSL registrations), `tests/core.cpp` (native ctest),
   `tests/*.lms` and `examples/*.lms` (DSL programs that assert), `data/xcom.csv` (embedded tables),

@@ -20,7 +20,7 @@ rad.assert_true(rw.track_points() > 120 && rl.track_points() > 120);
 rad.print("water: " + str(rw.interactions("compton")) + " Compton scatters per photon, lead: " + str(rl.interactions("compton")));
 end _lmcode_
 savedsl(compute, "build/visuals/photon_tracks-compute.dslb");
-r = system ${dsl_cli(compute)} --dsl build/visuals/photon_tracks-compute.dslb;
+r = system ${dsl_cli(compute)} --lmcode build/visuals/photon_tracks-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 
 # gnuplot wants one block per history (two blank lines between blocks) so `index 0:k` can reveal them one by one;
@@ -69,7 +69,7 @@ for (i in range(0, 30)) {
 }
 end _lmcode_
 savedsl(draw, "build/visuals/photon_tracks-draw.dslb");
-r = system ${dsl_cli(draw)} --dsl build/visuals/photon_tracks-draw.dslb;
+r = system ${dsl_cli(draw)} --lmcode build/visuals/photon_tracks-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 if (which("ffmpeg") != null) {
   r = system ffmpeg -v error -y -framerate 4 -start_number 1000 -i build/visuals/tracks-frame-%04d.png -filter_complex "[0:v]split[a][b];[a]palettegen[p];[b][p]paletteuse" -loop 0 docs/images/photon-tracks.gif;

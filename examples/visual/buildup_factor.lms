@@ -43,7 +43,7 @@ for (m in range(0, 3)) {
 rad.save_text("build/visuals/buildup_factor.csv", rows);
 end _lmcode_
 savedsl(compute, "build/visuals/buildup_factor-compute.dslb");
-r = system ${dsl_cli(compute)} --dsl build/visuals/buildup_factor-compute.dslb;
+r = system ${dsl_cli(compute)} --lmcode build/visuals/buildup_factor-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 print(r.stdout);
 write("build/visuals/buildup_published.csv", "1 2.08\n2 3.62\n");
@@ -56,6 +56,6 @@ plot.cmd("plot 'build/visuals/buildup_factor.csv' index 0 using 2:3:4 with yerro
 plot.close();
 end _lmcode_
 savedsl(draw, "build/visuals/buildup_factor-draw.dslb");
-r = system ${dsl_cli(draw)} --dsl build/visuals/buildup_factor-draw.dslb;
+r = system ${dsl_cli(draw)} --lmcode build/visuals/buildup_factor-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 println("wrote docs/images/buildup_factor.png");

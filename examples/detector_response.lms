@@ -19,7 +19,7 @@ r.save_pulse_height("crystal", "build/examples/detector_response.csv");
 end _lmcode_
 savedsl(p, out);
 if (ARGV.len() == 0) {
-  r = system ${dsl_cli(p)} --dsl ${out};
+  r = system ${dsl_cli(p)} --lmcode ${out};
   assert(r.code == 0, r.stdout + r.stderr);
   plot = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
   plot.png("docs/images/detector_response.png", 900, 560);
@@ -29,7 +29,7 @@ if (ARGV.len() == 0) {
   plot.close();
 end _lmcode_
   savedsl(plot, "build/detector_response-plot.dslb");
-  r = system ${dsl_cli(plot)} --dsl build/detector_response-plot.dslb;
+  r = system ${dsl_cli(plot)} --lmcode build/detector_response-plot.dslb;
   assert(r.code == 0, r.stdout + r.stderr);
   println("wrote docs/images/detector_response.png");
 }

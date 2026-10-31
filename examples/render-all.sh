@@ -2,7 +2,7 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$HERE"
-export PATH="$HERE/build:$HERE/../lmplot/build:$PATH"
+export PATH="$HERE/build:$PATH"
 if command -v gh >/dev/null 2>&1 && [ -z "${GITHUB_TOKEN:-}" ]; then
   GITHUB_TOKEN="$(gh auth token 2>/dev/null || true)"
   [ -n "$GITHUB_TOKEN" ] && export GITHUB_TOKEN

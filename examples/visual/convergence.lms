@@ -39,7 +39,7 @@ for (mode in range(0, 2)) {
 rad.save_text("build/visuals/convergence.csv", rows);
 end _lmcode_
 savedsl(compute, "build/visuals/convergence-compute.dslb");
-r = system ${dsl_cli(compute)} --dsl build/visuals/convergence-compute.dslb;
+r = system ${dsl_cli(compute)} --lmcode build/visuals/convergence-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 vals = [[], []];
 b = 0; blank = false;
@@ -70,6 +70,6 @@ plot.cmd("unset multiplot");
 plot.close();
 end _lmcode_
 savedsl(draw, "build/visuals/convergence-draw.dslb");
-r = system ${dsl_cli(draw)} --dsl build/visuals/convergence-draw.dslb;
+r = system ${dsl_cli(draw)} --lmcode build/visuals/convergence-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 println("wrote docs/images/convergence.png");

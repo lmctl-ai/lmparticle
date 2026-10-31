@@ -24,7 +24,7 @@ rad.print("absorbed " + str(r.total_deposited() / r.source_energy()) + " of the 
 end _lmcode_
 savedsl(p, out);
 if (ARGV.len() == 0) {
-  r = system ${dsl_cli(p)} --dsl ${out};
+  r = system ${dsl_cli(p)} --lmcode ${out};
   assert(r.code == 0, r.stdout + r.stderr);
   plot = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
   plot.png("docs/images/depth_dose.png", 900, 560);
@@ -33,7 +33,7 @@ if (ARGV.len() == 0) {
   plot.close();
 end _lmcode_
   savedsl(plot, "build/depth_dose-plot.dslb");
-  r = system ${dsl_cli(plot)} --dsl build/depth_dose-plot.dslb;
+  r = system ${dsl_cli(plot)} --lmcode build/depth_dose-plot.dslb;
   assert(r.code == 0, r.stdout + r.stderr);
   println("wrote docs/images/depth_dose.png");
 }

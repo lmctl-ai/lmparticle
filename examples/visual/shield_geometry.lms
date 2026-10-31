@@ -16,7 +16,7 @@ for (i in range(0,4)) {
 rad.save_text("build/visuals/shield_geometry.csv",rows);
 end _lmcode_
 savedsl(compute,"build/visuals/shield_geometry-compute.dslb");
-r=system ${dsl_cli(compute)} --dsl build/visuals/shield_geometry-compute.dslb;
+r=system ${dsl_cli(compute)} --lmcode build/visuals/shield_geometry-compute.dslb;
 assert(r.code==0,r.stdout+r.stderr);
 draw=_lmcode_ cli="lmcad" install="github:lmctl-ai/lmcad@latest";
 scene.background(0.035,0.055,0.095);
@@ -37,6 +37,6 @@ scene.camera(38.0,6.0,7.0,11.0,0.0,0.0,0.6);
 scene.render_png("docs/images/shield_geometry.png",900,560);
 end _lmcode_
 savedsl(draw,"build/visuals/shield_geometry-draw.dslb");
-r=system ${dsl_cli(draw)} --dsl build/visuals/shield_geometry-draw.dslb;
+r=system ${dsl_cli(draw)} --lmcode build/visuals/shield_geometry-draw.dslb;
 assert(r.code==0,r.stdout+r.stderr);
 println("wrote docs/images/shield_geometry.png");

@@ -25,7 +25,7 @@ rad.assert_true(abs(ra.pulse_fraction("crystal", 0.655, 0.67) - rb.pulse_fractio
 rad.print("160-210 keV window: " + str(wa) + " bare, " + str(wb) + " with lead behind the source");
 end _lmcode_
 savedsl(compute, "build/visuals/backscatter_peak-compute.dslb");
-r = system ${dsl_cli(compute)} --dsl build/visuals/backscatter_peak-compute.dslb;
+r = system ${dsl_cli(compute)} --lmcode build/visuals/backscatter_peak-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
 plot.png("docs/images/backscatter_peak.png", 900, 560);
@@ -38,7 +38,7 @@ plot.cmd("plot 'build/visuals/backscatter_bare.csv' using (($1+$2)/2):3 with his
 plot.close();
 end _lmcode_
 savedsl(draw, "build/visuals/backscatter_peak-draw.dslb");
-r = system ${dsl_cli(draw)} --dsl build/visuals/backscatter_peak-draw.dslb;
+r = system ${dsl_cli(draw)} --lmcode build/visuals/backscatter_peak-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 println("wrote docs/images/backscatter_peak.png");
 
@@ -68,7 +68,7 @@ scene.text(700.0, 400.0, 12.0, "3 cm", "#555555");
 scene.render_png("build/rendered/backscatter_geometry.png", 900, 420, 1);
 end _lmcode_
 savedsl(sketch, "build/visuals/backscatter_peak-sketch.dslb");
-r = system ${dsl_cli(sketch)} --dsl build/visuals/backscatter_peak-sketch.dslb;
+r = system ${dsl_cli(sketch)} --lmcode build/visuals/backscatter_peak-sketch.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 copy_file("build/rendered/backscatter_geometry.png", "docs/images/backscatter_geometry.png");
 println("wrote docs/images/backscatter_geometry.png");

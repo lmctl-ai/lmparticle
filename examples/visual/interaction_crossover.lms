@@ -13,7 +13,7 @@ for (i in range(0, 20)) {
 rad.save_text("build/visuals/interaction_crossover.csv", rows);
 end _lmcode_
 savedsl(compute, "build/visuals/interaction_crossover-compute.dslb");
-r = system ${dsl_cli(compute)} --dsl build/visuals/interaction_crossover-compute.dslb;
+r = system ${dsl_cli(compute)} --lmcode build/visuals/interaction_crossover-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 
 draw = _lmcode_ cli="lmplot" install="github:lmctl-ai/lmplot@latest";
@@ -23,7 +23,7 @@ plot.cmd("plot 'build/visuals/interaction_crossover.csv' every ::1 using 1:2 wit
 plot.close();
 end _lmcode_
 savedsl(draw, "build/visuals/interaction_crossover-draw.dslb");
-r = system ${dsl_cli(draw)} --dsl build/visuals/interaction_crossover-draw.dslb;
+r = system ${dsl_cli(draw)} --lmcode build/visuals/interaction_crossover-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 
 println("wrote docs/images/interaction_crossover.png");

@@ -36,7 +36,7 @@ for (k in range(0, 4)) {
 rad.save_text("build/visuals/dose_rate_distance.csv", rows);
 end _lmcode_
 savedsl(compute, "build/visuals/dose_rate_distance-compute.dslb");
-r = system ${dsl_cli(compute)} --dsl build/visuals/dose_rate_distance-compute.dslb;
+r = system ${dsl_cli(compute)} --lmcode build/visuals/dose_rate_distance-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 # inverse square and shell attenuation: the uncollided kerma at 100 cm versus 10 cm, and 2 cm of lead versus none
 rows = read_lines("build/visuals/dose_rate_distance.csv");
@@ -56,6 +56,6 @@ plot.cmd("plot 'build/visuals/dose_rate_distance.csv' index 0 using 2:3:4 with y
 plot.close();
 end _lmcode_
 savedsl(draw, "build/visuals/dose_rate_distance-draw.dslb");
-r = system ${dsl_cli(draw)} --dsl build/visuals/dose_rate_distance-draw.dslb;
+r = system ${dsl_cli(draw)} --lmcode build/visuals/dose_rate_distance-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 println("wrote docs/images/dose_rate_distance.png");

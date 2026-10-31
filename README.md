@@ -89,7 +89,7 @@ rad.print("uncollided " + str(r.plane_uncollided("exit")) + " +- " + str(r.plane
 rad.assert_close(r.plane_uncollided("exit"), pow(2.718281828459045, -pb.mu(0.662)), 0.005);   # exp(-mu x)
 end _lmcode_
 savedsl(p, "shield.dslb");
-system ${dsl_cli(p)} --dsl shield.dslb;
+system ${dsl_cli(p)} --lmcode shield.dslb;
 ```
 
 `lmscript shield.lms` finds `lmparticle` on `PATH` or downloads the release binary for your platform on

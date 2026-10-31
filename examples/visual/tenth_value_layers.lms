@@ -42,7 +42,7 @@ for (m in range(0, 2)) {
 rad.save_text("build/visuals/tvl.csv", rows);
 end _lmcode_
 savedsl(compute, "build/visuals/tenth_value_layers-compute.dslb");
-r = system ${dsl_cli(compute)} --dsl build/visuals/tenth_value_layers-compute.dslb;
+r = system ${dsl_cli(compute)} --lmcode build/visuals/tenth_value_layers-compute.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 
 # tenth-value layer: where the transmission curve crosses 0.1 (log-linear interpolation between sweep points)
@@ -104,6 +104,6 @@ plot.cmd("unset multiplot");
 plot.close();
 end _lmcode_
 savedsl(draw, "build/visuals/tenth_value_layers-draw.dslb");
-r = system ${dsl_cli(draw)} --dsl build/visuals/tenth_value_layers-draw.dslb;
+r = system ${dsl_cli(draw)} --lmcode build/visuals/tenth_value_layers-draw.dslb;
 assert(r.code == 0, r.stdout + r.stderr);
 println("wrote docs/images/tenth_value_layers.png");
